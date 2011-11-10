@@ -1,0 +1,7 @@
+This package, the Spring AMQP Camel component is licensed under
+the Mozilla Public License 2.0. Please see LICENSE-MPL for details.
+
+The Spring AMQP Camel component leverages (but does not provide) external 
+dependencies released under the Apache Licence v2. For this license, please 
+see LICENSE-APACHE2. For attribution of copyright and other details of 
+provenance, please refer to the source code.
