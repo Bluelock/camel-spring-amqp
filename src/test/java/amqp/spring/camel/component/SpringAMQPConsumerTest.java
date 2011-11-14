@@ -56,6 +56,10 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         Map<String, Object> keyValues = SpringAMQPConsumer.parseKeyValues("cheese=gouda&fromage=jack");
         Assert.assertEquals("gouda", keyValues.get("cheese"));
         Assert.assertEquals("jack", keyValues.get("fromage"));
+
+        keyValues = SpringAMQPConsumer.parseKeyValues("cheese=gouda|fromage=jack");
+        Assert.assertEquals("gouda", keyValues.get("cheese"));
+        Assert.assertEquals("jack", keyValues.get("fromage"));
     }
 
     @Test
@@ -67,14 +71,14 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     }
     
     @Test
-    public void testHeaderExchange() throws Exception {
+    public void testHeaderAndExchange() throws Exception {
         MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.b", MockEndpoint.class);
         mockEndpointOne.expectedMessageCount(1);
         
         Map<String, Object> headersOne = new HashMap<String, Object>();
         headersOne.put("cheese", "asiago");
         headersOne.put("fromage", "cheddar");
-        context().createProducerTemplate().sendBodyAndHeaders("spring-amqp:headerExchange?type=headers", "testHeaderExchange", headersOne);
+        context().createProducerTemplate().sendBodyAndHeaders("spring-amqp:headerAndExchange?type=headers", "testHeaderExchange", headersOne);
         
         MockEndpoint mockEndpointTwo = context().getEndpoint("mock:test.c", MockEndpoint.class);
         mockEndpointTwo.expectedMessageCount(1);
@@ -82,10 +86,28 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         Map<String, Object> headersTwo = new HashMap<String, Object>();
         headersTwo.put("cheese", "gouda");
         headersTwo.put("fromage", "jack");
-        context().createProducerTemplate().sendBodyAndHeaders("spring-amqp:headerExchange?type=headers", "testHeaderExchange", headersTwo);
+        context().createProducerTemplate().sendBodyAndHeaders("spring-amqp:headerAndExchange?type=headers", "testHeaderExchange", headersTwo);
         
         mockEndpointOne.assertIsSatisfied();
         mockEndpointTwo.assertIsSatisfied();
+    }
+    
+    @Test
+    public void testHeaderOrExchange() throws Exception {
+        MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.d", MockEndpoint.class);
+        mockEndpointOne.expectedMessageCount(2);
+        
+        Map<String, Object> headersOne = new HashMap<String, Object>();
+        headersOne.put("cheese", "asiago");
+        headersOne.put("fromage", "bleu");
+        context().createProducerTemplate().sendBodyAndHeaders("spring-amqp:headerOrExchange?type=headers", "testHeaderExchange", headersOne);
+        
+        Map<String, Object> headersTwo = new HashMap<String, Object>();
+        headersTwo.put("cheese", "white");
+        headersTwo.put("fromage", "jack");
+        context().createProducerTemplate().sendBodyAndHeaders("spring-amqp:headerOrExchange?type=headers", "testHeaderExchange", headersTwo);
+        
+        mockEndpointOne.assertIsSatisfied();
     }
     
     @Override
@@ -108,8 +130,9 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
             @Override
             public void configure() throws Exception {
                 from("spring-amqp:directExchange:q1:test.a?durable=false&autodelete=true&exclusive=false").to("mock:test.a");
-                from("spring-amqp:headerExchange:q2:cheese=asiago&fromage=cheddar?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.b");
-                from("spring-amqp:headerExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
+                from("spring-amqp:headerAndExchange:q2:cheese=asiago&fromage=cheddar?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.b");
+                from("spring-amqp:headerAndExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
+                from("spring-amqp:headerOrExchange:q4:cheese=white|fromage=bleu?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.d");
             }
         };
     }

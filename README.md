@@ -15,11 +15,21 @@ The routing key is optional, but Queue Name and Exchange Name are required for c
 
 Options to the URI include the exchange type, which defaults to direct if none is specified.
 
+For header based exchanges, the URI is similar but name/value pairs can be specified in place of the routing key. For example:
+
+`spring-amqp:myExchange:qName:cheese=gouda?type=headers`
+
+This example will fetch all messages where a header named "cheese" has the value of "gouda." You can also add additional name/value pairs:
+
+`spring-amqp:myExchange:qName:cheese=gouda&fromage=jack?type=headers`
+
+Which will create a binding for headers where "cheese" has the value of "gouda" AND "fromage" has the value of "jack." You can also choose to create an OR relationship:
+
+`spring-amqp:myExchange:qName:cheese=gouda|fromage=jack?type=headers`
+
 ## Limitations
 
  - Transactions are currently not supported
-
- - Header exchange is currently not implemented, but will be shortly
 
  - The component is currently undergoing integration testing but has not yet been tested in a production environment
 

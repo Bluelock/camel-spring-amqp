@@ -62,12 +62,23 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         this.endpoint.getAmqpAdministration().declareQueue(queue);
         LOG.info("Declared queue {}", this.queue.getName());
         
-        if(exchange instanceof HeadersExchange) { //Is this a header exchange? Bind the key/value pair(s)
+        //Is this a header exchange? Bind the key/value pair(s)
+        if(exchange instanceof HeadersExchange) { 
+            if(this.endpoint.routingKey.contains("|") && this.endpoint.routingKey.contains("&"))
+                throw new IllegalArgumentException("You cannot mix AND and OR expressions within a header binding");
+        
             Map<String, Object> keyValues = parseKeyValues(this.endpoint.routingKey);
-            this.binding = BindingBuilder.bind(this.queue).to((HeadersExchange) exchange).whereAll(keyValues).match();
+            BindingBuilder.HeadersExchangeMapConfigurer mapConfig = BindingBuilder.bind(this.queue).to((HeadersExchange) exchange);
+            if(this.endpoint.routingKey.contains("|"))
+                this.binding = mapConfig.whereAny(keyValues).match();
+            else
+                this.binding = mapConfig.whereAll(keyValues).match();
+            
+        //This is not a header exchange, perform routing key binding
         } else {
             this.binding = BindingBuilder.bind(this.queue).to(exchange).with(this.endpoint.routingKey).noargs();
         }
+        
         this.endpoint.getAmqpAdministration().declareBinding(binding);
         LOG.info("Declared binding {}", this.binding.getRoutingKey());
         
@@ -106,9 +117,6 @@ public class SpringAMQPConsumer extends DefaultConsumer {
     }
     
     protected static Map<String, Object> parseKeyValues(String routingKey) {
-        if(routingKey.contains("|"))
-            throw new IllegalArgumentException("Sorry, OR boolean not yet supported, only AND.");
-        
         StringTokenizer tokenizer = new StringTokenizer(routingKey, "&|");
         Map<String, Object> pairs = new HashMap<String, Object>();
         while(tokenizer.hasMoreTokens()) {

@@ -15,6 +15,8 @@
  */
 package amqp.spring.camel.component;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Resource;
 import org.apache.camel.CamelContext;
 import org.apache.camel.EndpointInject;
@@ -39,10 +41,13 @@ public class SpringXMLTest {
     protected CamelContext camelContext;
     @EndpointInject(uri = "mock:testOne")
     protected MockEndpoint testOne;
+    @EndpointInject(uri = "mock:testTwo")
+    protected MockEndpoint testTwo;
     
     @Before
     public void resetEndpoints() throws Exception {
         testOne.reset();
+        testTwo.reset();
     }
     
     @Test
@@ -51,6 +56,20 @@ public class SpringXMLTest {
         testOne.expectedBodiesReceived("HELLO WORLD");
         Object response = template.requestBody("direct:stepOne", "HELLO WORLD");
         testOne.assertIsSatisfied();
+        Assert.assertNotNull(response);
+    }
+    
+    @Test
+    public void testHeadersExchange() throws Exception {
+        testTwo.expectedMessageCount(1);
+        testTwo.expectedBodiesReceived("HELLO HEADERS");
+        
+        Map<String, Object> headers = new HashMap<String, Object>();
+        headers.put("key1", "value1");
+        headers.put("key2", "value2");
+        
+        Object response = template.requestBodyAndHeaders("direct:stepTwo", "HELLO HEADERS", headers);
+        testTwo.assertIsSatisfied();
         Assert.assertNotNull(response);
     }
 }

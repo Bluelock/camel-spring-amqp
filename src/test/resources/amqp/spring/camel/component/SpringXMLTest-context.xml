@@ -39,6 +39,16 @@
             <from uri="spring-amqp:myExchange:myQueue:test.m?type=direct&amp;durable=false&amp;autodelete=true&amp;exclusive=false"/>
             <to uri="mock:testOne"/>
         </route>
+
+        <route>
+            <from uri="direct:stepTwo"/>
+            <to uri="spring-amqp:magicExchange?type=headers&amp;durable=false&amp;autodelete=true&amp;exclusive=false"/>
+        </route>
+        
+        <route>
+            <from uri="spring-amqp:magicExchange:mysteryQ:key1=value1&amp;key2=value2?type=headers&amp;durable=false&amp;autodelete=true&amp;exclusive=false"/>
+            <to uri="mock:testTwo"/>
+        </route>
     </camelContext>
     
     <bean id="spring-amqp" class="amqp.spring.camel.component.SpringAMQPComponent"/>
