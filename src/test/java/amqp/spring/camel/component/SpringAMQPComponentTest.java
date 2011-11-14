@@ -31,7 +31,6 @@ public class SpringAMQPComponentTest extends CamelTestSupport {
         Assert.assertNotNull(component);
     }
     
-
     @Override
     protected CamelContext createCamelContext() throws Exception {
         ConnectionFactory factory = new CachingConnectionFactory();

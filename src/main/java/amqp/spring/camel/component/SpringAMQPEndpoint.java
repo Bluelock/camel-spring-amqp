@@ -24,6 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.HeadersExchange;
+import org.springframework.amqp.core.TopicExchange;
 
 /**
  * RabbitMQ Consumer URIs are in the format of:<br/>
@@ -77,15 +81,18 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     @Override
     public Producer createProducer() throws Exception {
+        if(this.exchangeName == null)
+            throw new IllegalStateException("Cannot have null exchange name");
+        
         return new SpringAMQPProducer(this);
     }
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
+        if(this.exchangeName == null)
+            throw new IllegalStateException("Cannot have null exchange name");
         if(this.queueName == null)
             throw new IllegalStateException("Cannot have null queue name for exchange "+this.exchangeName);
-        if(this.routingKey == null)
-            throw new IllegalStateException("Cannot have null routing key for exchange "+this.exchangeName);
         
         return new SpringAMQPConsumer(this, processor);
     }
@@ -187,5 +194,19 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     @Override
     protected String createEndpointUri() {
         return "spring-amqp:"+this.exchangeName+":"+this.routingKey;
+    }
+    
+    org.springframework.amqp.core.Exchange createAMQPExchange() {
+        if("direct".equals(this.exchangeType)) {
+            return new DirectExchange(this.exchangeName, this.durable, this.autodelete);
+        } else if("fanout".equals(this.exchangeType)) {
+            return new FanoutExchange(this.exchangeName, this.durable, this.autodelete);
+        } else if("headers".equals(this.exchangeType)) {
+            return new HeadersExchange(this.exchangeName, this.durable, this.autodelete);
+        } else if("topic".equals(this.exchangeType)) {
+            return new TopicExchange(this.exchangeName, this.durable, this.autodelete);
+        } else {
+            return new DirectExchange(this.exchangeName, this.durable, this.autodelete);
+        }
     }
 }

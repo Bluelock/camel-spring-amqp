@@ -16,7 +16,10 @@
 package amqp.spring.camel.component;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.StringTokenizer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -29,13 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.HeadersExchange;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 
 public class SpringAMQPConsumer extends DefaultConsumer {
-    private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
+    private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPConsumer.class);
     
     protected SpringAMQPEndpoint endpoint;
     private ThreadPoolExecutor consumers;
@@ -51,7 +55,7 @@ public class SpringAMQPConsumer extends DefaultConsumer {
     public void start() throws Exception {
         super.start();
         
-        org.springframework.amqp.core.Exchange exchange = SpringAMQPProducer.createAMQPExchange(this.endpoint);
+        org.springframework.amqp.core.Exchange exchange = this.endpoint.createAMQPExchange();
         this.endpoint.amqpAdministration.declareExchange(exchange);
         LOG.info("Declared exchange {}", exchange.getName());
 
@@ -59,7 +63,12 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         this.endpoint.getAmqpAdministration().declareQueue(queue);
         LOG.info("Declared queue {}", this.queue.getName());
         
-        this.binding = BindingBuilder.bind(this.queue).to(exchange).with(this.endpoint.routingKey).noargs();
+        if(exchange instanceof HeadersExchange) { //Is this a header exchange? Bind the key/value pair(s)
+            Map<String, Object> keyValues = parseKeyValues(this.endpoint.routingKey);
+            this.binding = BindingBuilder.bind(this.queue).to((HeadersExchange) exchange).whereAll(keyValues).match();
+        } else {
+            this.binding = BindingBuilder.bind(this.queue).to(exchange).with(this.endpoint.routingKey).noargs();
+        }
         this.endpoint.getAmqpAdministration().declareBinding(binding);
         LOG.info("Declared binding {}", this.binding.getRoutingKey());
         
@@ -84,18 +93,29 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             this.consumers.purge();
             this.consumers.getQueue().clear();
         }
-
-        if(this.endpoint.amqpAdministration != null && this.binding != null) {
-            this.endpoint.amqpAdministration.removeBinding(this.binding);
-            LOG.info("Removed binding {}", this.binding.getRoutingKey());
-        }
-        
-        if(this.endpoint.amqpAdministration != null && this.queue != null) {
-            this.endpoint.amqpAdministration.deleteQueue(this.queue.getName());
-            LOG.info("Deleted queue {}", this.queue.getName());
-        }
         
         super.stop();
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        stop();
+        super.shutdown();
+    }
+    
+    protected static Map<String, Object> parseKeyValues(String routingKey) {
+        if(routingKey.contains("|"))
+            throw new IllegalArgumentException("Sorry, OR boolean not yet supported, only AND.");
+        
+        StringTokenizer tokenizer = new StringTokenizer(routingKey, "&|");
+        Map<String, Object> pairs = new HashMap<String, Object>();
+        while(tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            String[] keyValue = token.split("=");
+            pairs.put(keyValue[0], keyValue[1]);
+        }
+        
+        return pairs;
     }
 
     //We have to ask the RabbitMQ Template for converters, the interface doesn't have a way to get MessageConverter
@@ -115,7 +135,7 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                     Message message = this.template.receive(endpoint.queueName);
                     
                     if(message == null) {
-                        LOG.error("Received invalid message, cannot process!");
+                        LOG.debug("Received null message, will not process response");
                         continue;
                     }
                     
@@ -131,6 +151,8 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                     
                     getProcessor().process(exchange);
                 }
+                
+                LOG.info("Shutting down consumer thread for {}", endpoint.queueName);
             } catch (IOException e) {
                 LOG.error("Error when attempting to speak with RabbitMQ", e);
             } catch (InterruptedException e) {

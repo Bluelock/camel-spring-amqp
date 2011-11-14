@@ -21,12 +21,8 @@ import org.apache.camel.impl.DefaultProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.FanoutExchange;
-import org.springframework.amqp.core.HeadersExchange;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePostProcessor;
-import org.springframework.amqp.core.TopicExchange;
 
 public class SpringAMQPProducer extends DefaultProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
@@ -51,7 +47,7 @@ public class SpringAMQPProducer extends DefaultProducer {
     public void start() throws Exception {
         super.start();
         
-        this.exchange = createAMQPExchange(this.endpoint);
+        this.exchange = this.endpoint.createAMQPExchange();
         this.endpoint.amqpAdministration.declareExchange(this.exchange);
         LOG.info("Declared exchange {}", this.exchange.getName());
     }
@@ -64,20 +60,6 @@ public class SpringAMQPProducer extends DefaultProducer {
         }
         
         super.stop();
-    }
-    
-    static org.springframework.amqp.core.Exchange createAMQPExchange(SpringAMQPEndpoint endpoint) {
-        if("direct".equals(endpoint.exchangeType)) {
-            return new DirectExchange(endpoint.exchangeName, endpoint.durable, endpoint.autodelete);
-        } else if("fanout".equals(endpoint.exchangeType)) {
-            return new FanoutExchange(endpoint.exchangeName, endpoint.durable, endpoint.autodelete);
-        } else if("headers".equals(endpoint.exchangeType)) {
-            return new HeadersExchange(endpoint.exchangeName, endpoint.durable, endpoint.autodelete);
-        } else if("topic".equals(endpoint.exchangeType)) {
-            return new TopicExchange(endpoint.exchangeName, endpoint.durable, endpoint.autodelete);
-        } else {
-            return new DirectExchange(endpoint.exchangeName, endpoint.durable, endpoint.autodelete);
-        }
     }
     
     private static class HeadersPostProcessor implements MessagePostProcessor {

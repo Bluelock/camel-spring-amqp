@@ -32,11 +32,11 @@
 
         <route>
             <from uri="direct:stepOne"/>
-            <to uri="spring-amqp:myExchange:test.c?type=direct&amp;durable=false&amp;autodelete=true&amp;exclusive=false"/>
+            <to uri="spring-amqp:myExchange:test.m?type=direct&amp;durable=false&amp;autodelete=true&amp;exclusive=false"/>
         </route>
         
         <route>
-            <from uri="spring-amqp:myExchange:myQueue:test.c?type=direct&amp;durable=false&amp;autodelete=true&amp;exclusive=false"/>
+            <from uri="spring-amqp:myExchange:myQueue:test.m?type=direct&amp;durable=false&amp;autodelete=true&amp;exclusive=false"/>
             <to uri="mock:testOne"/>
         </route>
     </camelContext>

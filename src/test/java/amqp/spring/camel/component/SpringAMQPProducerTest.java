@@ -36,14 +36,14 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
     
     @Test 
     public void restartProducer() throws Exception {
-        Producer producer = context().getEndpoint("spring-amqp:myExchange:test.a?durable=false&autodelete=true&exclusive=false").createProducer();
-        producer.stop();
+        Producer producer = context().getEndpoint("spring-amqp:myExchange:test.z?durable=false&autodelete=true&exclusive=false").createProducer();
         producer.start();
+        producer.stop();
     }
     
     @Test
     public void sendMessage() throws Exception {
-        context().createProducerTemplate().sendBody("direct:test.a", "HELLO WORLD");
+        context().createProducerTemplate().sendBody("direct:test.z", "HELLO WORLD");
     }
     
     @Override
@@ -60,7 +60,7 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
         return new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                from("direct:test.a").to("spring-amqp:myExchange:test.a?durable=false&autodelete=true&exclusive=false");
+                from("direct:test.z").to("spring-amqp:myExchange:test.z?durable=false&autodelete=true&exclusive=false");
             }
         };
     }
