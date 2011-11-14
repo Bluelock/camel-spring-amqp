@@ -20,10 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.StringTokenizer;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.impl.DefaultConsumer;
@@ -34,21 +30,24 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.HeadersExchange;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.MessageConverter;
 
 public class SpringAMQPConsumer extends DefaultConsumer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPConsumer.class);
     
     protected SpringAMQPEndpoint endpoint;
-    private ThreadPoolExecutor consumers;
+    private RabbitMQConsumerTask messageListener;
     private Queue queue;
     private Binding binding;
     
     public SpringAMQPConsumer(SpringAMQPEndpoint endpoint, Processor processor) {
         super(endpoint, processor);
         this.endpoint = endpoint;
+        this.messageListener = new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate(), this.endpoint.queueName, this.endpoint.getConcurrentConsumers());
     }
 
     @Override
@@ -72,26 +71,21 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         this.endpoint.getAmqpAdministration().declareBinding(binding);
         LOG.info("Declared binding {}", this.binding.getRoutingKey());
         
-        BlockingQueue<Runnable> threadQueue = new LinkedBlockingQueue(this.endpoint.concurrentConsumers);
-        this.consumers = new ThreadPoolExecutor(this.endpoint.concurrentConsumers, this.endpoint.concurrentConsumers, Long.MAX_VALUE, TimeUnit.MILLISECONDS, threadQueue);
-        
-        for(int i = 0; i < this.endpoint.concurrentConsumers; ++i)
-            this.consumers.execute(new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate()));
+        this.messageListener.start();
     }
 
     @Override
     public void stop() throws Exception {
-        if(this.consumers != null) {
-            LOG.info("Shutting down {} consumers", endpoint.concurrentConsumers);
-            this.consumers.shutdown();
-            try {
-                this.consumers.awaitTermination(60, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                LOG.error("Waited 60 seconds for termination of all consumers but timed out. Forcing the end!");
-                this.consumers.shutdownNow();
-            }
-            this.consumers.purge();
-            this.consumers.getQueue().clear();
+        this.messageListener.stop();
+        
+        if(this.endpoint.amqpAdministration != null && this.binding != null) {
+            this.endpoint.amqpAdministration.removeBinding(this.binding);
+            LOG.info("Removed binding {}", this.binding.getRoutingKey());
+        }
+        
+        if(this.endpoint.amqpAdministration != null && this.queue != null) {
+            this.endpoint.amqpAdministration.deleteQueue(this.queue.getName());
+            LOG.info("Deleted queue {}", this.queue.getName());
         }
         
         super.stop();
@@ -99,7 +93,7 @@ public class SpringAMQPConsumer extends DefaultConsumer {
 
     @Override
     public void shutdown() throws Exception {
-        stop();
+        this.messageListener.shutdown();
         super.shutdown();
     }
     
@@ -119,40 +113,44 @@ public class SpringAMQPConsumer extends DefaultConsumer {
     }
 
     //We have to ask the RabbitMQ Template for converters, the interface doesn't have a way to get MessageConverter
-    class RabbitMQConsumerTask implements Runnable {
-        private RabbitTemplate template;
+    class RabbitMQConsumerTask implements MessageListener {
+        private MessageConverter msgConverter;
+        private SimpleMessageListenerContainer listenerContainer;
         
-        public RabbitMQConsumerTask(RabbitTemplate template) {
-            this.template = template;
+        public RabbitMQConsumerTask(RabbitTemplate template, String queue, int concurrentConsumers) {
+            this.msgConverter = template.getMessageConverter();
+            this.listenerContainer = new SimpleMessageListenerContainer();
+            this.listenerContainer.setConnectionFactory(template.getConnectionFactory());
+            this.listenerContainer.setQueueNames(queue);
+            this.listenerContainer.setConcurrentConsumers(concurrentConsumers);
         }
         
-        @Override
-        public void run() {
-            try {
-                LOG.info("Prepared consumer for {}", endpoint.queueName);
+        public void start() {
+            this.listenerContainer.setMessageListener(this);
+            this.listenerContainer.start();
+        }
+        
+        public void stop() {
+            this.listenerContainer.stop();
+        }
+        
+        public void shutdown() {
+            this.listenerContainer.shutdown();
+        }
 
-                while(isRunAllowed()) {
-                    Message message = this.template.receive(endpoint.queueName);
-                    
-                    if(message == null) {
-                        LOG.debug("Received null message, will not process response");
-                        continue;
-                    }
-                    
-                    LOG.trace("Received message for routing key {}", message.getMessageProperties().getReceivedRoutingKey());
-                    
-                    MessageConverter msgConverter = this.template.getMessageConverter();
-                    Object body = msgConverter.fromMessage(message);
-                    
-                    Exchange exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
-                    exchange.getIn().setBody(body);
-                    for(Entry<String, Object> headerEntry : message.getMessageProperties().getHeaders().entrySet())
-                        exchange.getIn().setHeader(headerEntry.getKey(), headerEntry.getValue());
-                    
-                    getProcessor().process(exchange);
-                }
-                
-                LOG.info("Shutting down consumer thread for {}", endpoint.queueName);
+        @Override
+        public void onMessage(Message message) {
+            try {
+                LOG.trace("Received message for routing key {}", message.getMessageProperties().getReceivedRoutingKey());
+
+                Object body = msgConverter.fromMessage(message);
+
+                Exchange exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
+                exchange.getIn().setBody(body);
+                for(Entry<String, Object> headerEntry : message.getMessageProperties().getHeaders().entrySet())
+                    exchange.getIn().setHeader(headerEntry.getKey(), headerEntry.getValue());
+
+                getProcessor().process(exchange);
             } catch (IOException e) {
                 LOG.error("Error when attempting to speak with RabbitMQ", e);
             } catch (InterruptedException e) {
@@ -161,6 +159,5 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                 LOG.warn("General exception during Camel handoff, Processor returned error", e);
             }
         }
-        
     }
 }

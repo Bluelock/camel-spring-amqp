@@ -39,7 +39,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         Assert.assertNotNull(component);
     }
     
-    @Test 
+//    @Test 
     public void restartConsumer() throws Exception {
         Processor defaultProcessor = new Processor() {
             @Override
