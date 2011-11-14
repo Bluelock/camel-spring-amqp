@@ -39,7 +39,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         Assert.assertNotNull(component);
     }
     
-//    @Test 
+    @Test 
     public void restartConsumer() throws Exception {
         Processor defaultProcessor = new Processor() {
             @Override
@@ -66,7 +66,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         mockEndpoint.assertIsSatisfied();
     }
     
-//    @Test
+    @Test
     public void testHeaderExchange() throws Exception {
         MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.b", MockEndpoint.class);
         mockEndpointOne.expectedMessageCount(1);
@@ -76,7 +76,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         headersOne.put("fromage", "cheddar");
         context().createProducerTemplate().sendBodyAndHeaders("spring-amqp:headerExchange?type=headers", "testHeaderExchange", headersOne);
         
-        MockEndpoint mockEndpointTwo = context().getEndpoint("mock:test.b", MockEndpoint.class);
+        MockEndpoint mockEndpointTwo = context().getEndpoint("mock:test.c", MockEndpoint.class);
         mockEndpointTwo.expectedMessageCount(1);
         
         Map<String, Object> headersTwo = new HashMap<String, Object>();
@@ -108,8 +108,8 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
             @Override
             public void configure() throws Exception {
                 from("spring-amqp:directExchange:q1:test.a?durable=false&autodelete=true&exclusive=false").to("mock:test.a");
-//                from("spring-amqp:headerExchange:q2:cheese=asiago&fromage=cheddar?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.b");
-//                from("spring-amqp:headerExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
+                from("spring-amqp:headerExchange:q2:cheese=asiago&fromage=cheddar?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.b");
+                from("spring-amqp:headerExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
             }
         };
     }

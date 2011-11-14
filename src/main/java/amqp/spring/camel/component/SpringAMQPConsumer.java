@@ -79,13 +79,21 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         this.messageListener.stop();
         
         if(this.endpoint.amqpAdministration != null && this.binding != null) {
-            this.endpoint.amqpAdministration.removeBinding(this.binding);
-            LOG.info("Removed binding {}", this.binding.getRoutingKey());
+            try {
+                this.endpoint.amqpAdministration.removeBinding(this.binding);
+                LOG.info("Removed binding {}", this.binding.getRoutingKey());
+            } catch (Exception e) {
+                LOG.warn("Error when trying to remove binding {}", this.binding.getRoutingKey(), e);
+            }
         }
         
         if(this.endpoint.amqpAdministration != null && this.queue != null) {
-            this.endpoint.amqpAdministration.deleteQueue(this.queue.getName());
-            LOG.info("Deleted queue {}", this.queue.getName());
+            try {
+                this.endpoint.amqpAdministration.deleteQueue(this.queue.getName());
+                LOG.info("Deleted queue {}", this.queue.getName());
+            } catch (Exception e) {
+                LOG.warn("Error when trying to delete queue {}", this.queue.getName(), e);
+            }
         }
         
         super.stop();
