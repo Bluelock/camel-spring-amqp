@@ -133,7 +133,7 @@
     <build>
         <resources>
             <resource>
-                <directory>src/main/java/META-INF</directory>
+                <directory>src/main/resources/META-INF</directory>
                 <targetPath>META-INF</targetPath>
             </resource>
         </resources>

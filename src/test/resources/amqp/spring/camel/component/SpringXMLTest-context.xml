@@ -51,7 +51,6 @@
         </route>
     </camelContext>
     
-    <bean id="spring-amqp" class="amqp.spring.camel.component.SpringAMQPComponent"/>
     <bean id="jsonMessageConverter" class="org.springframework.amqp.support.converter.JsonMessageConverter"/>
     <rabbit:connection-factory id="connectionFactory"/>
     <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="jsonMessageConverter"/>
