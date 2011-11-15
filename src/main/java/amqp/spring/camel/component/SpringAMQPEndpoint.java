@@ -50,7 +50,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     String exchangeName;
     String queueName;
     String routingKey;
-    String exchangeType = "direct";
+    String exchangeType;
     boolean durable = false;
     boolean exclusive = false;
     boolean autodelete = true;
@@ -230,7 +230,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     }
     
     org.springframework.amqp.core.Exchange createAMQPExchange() {
-        if("direct".equals(this.exchangeType)) {
+        if(this.exchangeType == null || "direct".equals(this.exchangeType)) {
             return new DirectExchange(this.exchangeName, this.durable, this.autodelete);
         } else if("fanout".equals(this.exchangeType)) {
             return new FanoutExchange(this.exchangeName, this.durable, this.autodelete);
