@@ -22,6 +22,7 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.camel.Consumer;
 import org.apache.camel.Exchange;
+import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mock.MockEndpoint;
@@ -67,8 +68,12 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     public void sendMessage() throws Exception {
         MockEndpoint mockEndpoint = context().getEndpoint("mock:test.a", MockEndpoint.class);
         mockEndpoint.expectedMessageCount(1);
-        context().createProducerTemplate().sendBody("spring-amqp:directExchange:test.a?durable=false&autodelete=true&exclusive=false", "sendMessage");
+        context().createProducerTemplate().sendBodyAndHeader("spring-amqp:directExchange:test.a?durable=false&autodelete=true&exclusive=false", "sendMessage", "HeaderKey", "HeaderValue");
+        
         mockEndpoint.assertIsSatisfied();
+        Message inMessage = mockEndpoint.getExchanges().get(0).getIn();
+        Assert.assertEquals("sendMessage", inMessage.getBody(String.class));
+        Assert.assertEquals("HeaderValue", inMessage.getHeader("HeaderKey"));
     }
     
     @Test

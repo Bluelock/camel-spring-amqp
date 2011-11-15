@@ -16,16 +16,19 @@
 package amqp.spring.camel.converter;
 
 import amqp.spring.camel.component.SpringAMQPMessage;
-import org.apache.camel.Converter;
-import org.apache.camel.Exchange;
-import org.apache.camel.Message;
+import org.apache.camel.impl.DefaultMessage;
+import org.junit.Assert;
+import org.junit.Test;
 
-@Converter
-public class SpringAMQPConverter {
-    @Converter
-    public static SpringAMQPMessage convertFrom(Message message, Exchange exchange) {
-        SpringAMQPMessage newMessage = new SpringAMQPMessage();
-        newMessage.copyFrom(message);
-        return newMessage;
+public class SpringAMQPConverterTest {
+    @Test
+    public void testConversion() throws Exception {
+        DefaultMessage oldMessage = new DefaultMessage();
+        oldMessage.setBody("Test String");
+        oldMessage.setHeader("Old Header", "Old Header Value");
+        
+        SpringAMQPMessage newMessage = SpringAMQPConverter.convertFrom(oldMessage, null);
+        Assert.assertEquals("Test String", newMessage.getBody(String.class));
+        Assert.assertEquals("Old Header Value", newMessage.getHeader("Old Header"));
     }
 }
