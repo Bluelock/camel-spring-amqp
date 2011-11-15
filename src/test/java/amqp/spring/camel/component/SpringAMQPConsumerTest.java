@@ -28,10 +28,11 @@ import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.JsonMessageConverter;
 
 //TODO Try having unit tests talk to a VM local AMQP broker (like a Qpid broker)
 public class SpringAMQPConsumerTest extends CamelTestSupport {
-    private CachingConnectionFactory factory;
     
     @Test
     public void testCreateContext() throws Exception {
@@ -112,16 +113,16 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     
     @Override
     protected CamelContext createCamelContext() throws Exception {
-        this.factory = new CachingConnectionFactory();
+        CachingConnectionFactory factory = new CachingConnectionFactory();
+        RabbitTemplate amqpTemplate = new RabbitTemplate(factory);
+        //The JSON converter stresses marshalling more than the default converter
+        amqpTemplate.setMessageConverter(new JsonMessageConverter());
+        SpringAMQPComponent amqpComponent = new SpringAMQPComponent(factory);
+        amqpComponent.setAmqpTemplate(amqpTemplate);
+        
         CamelContext camelContext = super.createCamelContext();
-        camelContext.addComponent("spring-amqp", new SpringAMQPComponent(this.factory));
+        camelContext.addComponent("spring-amqp", amqpComponent);
         return camelContext;
-    }
-
-    @Override
-    protected void stopCamelContext() throws Exception {
-        super.stopCamelContext();
-        this.factory.destroy();
     }
 
     @Override

@@ -39,6 +39,12 @@ public class SpringAMQPProducer extends DefaultProducer {
     public void process(Exchange exchange) throws Exception {
         LOG.trace("Sending exchange {}", exchange.getExchangeId());
         Object body = exchange.getIn().getBody();
+        
+        if(body == null) {
+            LOG.warn("Exchange {} had a null body, creating an empty byte array", exchange.getExchangeId());
+            body = new byte[] {};
+        }
+        
         MessagePostProcessor headerProcessor = new HeadersPostProcessor(exchange.getIn());
         this.endpoint.getAmqpTemplate().convertAndSend(this.endpoint.exchangeName, this.endpoint.routingKey, body, headerProcessor);
     }
@@ -71,6 +77,9 @@ public class SpringAMQPProducer extends DefaultProducer {
         
         @Override
         public Message postProcessMessage(Message msg) throws AmqpException {
+            if(camelMessage == null || camelMessage.getHeaders() == null)
+                return msg;
+                        
             for(Entry<String, Object> headerEntry : camelMessage.getHeaders().entrySet())
                 msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
             
