@@ -122,6 +122,9 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         while(tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
             String[] keyValue = token.split("=");
+            if(keyValue.length != 2)
+                throw new IllegalArgumentException("Couldn't parse key/value pair ["+token+"] out of string: "+routingKey);
+            
             pairs.put(keyValue[0], keyValue[1]);
         }
         
