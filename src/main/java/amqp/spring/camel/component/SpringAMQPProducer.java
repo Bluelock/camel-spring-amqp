@@ -15,14 +15,14 @@
  */
 package amqp.spring.camel.component;
 
-import java.util.Map.Entry;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.amqp.support.converter.SimpleMessageConverter;
 
 public class SpringAMQPProducer extends DefaultProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
@@ -37,23 +37,24 @@ public class SpringAMQPProducer extends DefaultProducer {
 
     @Override
     public void process(Exchange exchange) throws Exception {
-        Object body = exchange.getIn().getBody();
-        
-        if(body == null) {
-            LOG.warn("Exchange {} had a null body, creating an empty byte array", exchange.getExchangeId());
-            body = new byte[] {};
+        SpringAMQPMessage message = exchange.getIn(SpringAMQPMessage.class);
+        MessageConverter msgConverter;
+        if(this.endpoint.getAmqpTemplate() instanceof RabbitTemplate) {
+            RabbitTemplate rabbitTemplate = (RabbitTemplate) this.endpoint.getAmqpTemplate();
+            msgConverter = rabbitTemplate.getMessageConverter();
+        } else {
+            LOG.warn("Cannot find RabbitMQ AMQP Template, falling back to simple message converter");
+            msgConverter = new SimpleMessageConverter();
         }
-        
-        MessagePostProcessor headerProcessor = new HeadersPostProcessor(exchange.getIn());
         
         if(exchange.getPattern().isOutCapable()) {
             LOG.debug("Synchronous send and request for exchange {}", exchange.getExchangeId());
-            Object response = this.endpoint.getAmqpTemplate().convertSendAndReceive(this.endpoint.exchangeName, this.endpoint.routingKey, body, headerProcessor);
-            exchange.getOut().copyFrom(exchange.getIn());
-            exchange.getOut().setBody(response);
+            Message amqpResponse = this.endpoint.getAmqpTemplate().sendAndReceive(this.endpoint.exchangeName, this.endpoint.routingKey, message.toAMQPMessage(msgConverter));
+            SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
+            exchange.setOut(camelResponse);
         } else {
             LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
-            this.endpoint.getAmqpTemplate().convertAndSend(this.endpoint.exchangeName, this.endpoint.routingKey, body, headerProcessor);
+            this.endpoint.getAmqpTemplate().send(this.endpoint.exchangeName, this.endpoint.routingKey, message.toAMQPMessage(msgConverter));
         }
     }
 
@@ -65,22 +66,4 @@ public class SpringAMQPProducer extends DefaultProducer {
         this.endpoint.amqpAdministration.declareExchange(this.exchange);
         LOG.info("Declared exchange {}", this.exchange.getName());
     }
-
-    public static class HeadersPostProcessor implements MessagePostProcessor {
-        public org.apache.camel.Message camelMessage;
-        
-        public HeadersPostProcessor(org.apache.camel.Message camelMessage) {
-            this.camelMessage = camelMessage;
-        }
-        
-        @Override
-        public Message postProcessMessage(Message msg) throws AmqpException {
-            if(camelMessage == null || camelMessage.getHeaders() == null)
-                return msg;
-                        
-            for(Entry<String, Object> headerEntry : camelMessage.getHeaders().entrySet())
-                msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
-            
-            return msg;
-        }
-    }}
+}

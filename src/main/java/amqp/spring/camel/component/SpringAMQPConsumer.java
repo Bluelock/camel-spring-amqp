@@ -15,10 +15,8 @@
  */
 package amqp.spring.camel.component;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.StringTokenizer;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -148,28 +146,24 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         }
 
         @Override
-        public void onMessage(Message message) {
-            LOG.trace("Received message for routing key {}", message.getMessageProperties().getReceivedRoutingKey());
+        public void onMessage(Message amqpMessage) {
+            LOG.debug("Received message for routing key {}", amqpMessage.getMessageProperties().getReceivedRoutingKey());
 
-            Object body = msgConverter.fromMessage(message);
-
+            SpringAMQPMessage camelMessage = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpMessage);
             Exchange exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
-            exchange.getIn().setBody(body);
-            for(Entry<String, Object> headerEntry : message.getMessageProperties().getHeaders().entrySet())
-                exchange.getIn().setHeader(headerEntry.getKey(), headerEntry.getValue());
+            exchange.setIn(camelMessage);
 
             try {
                 getProcessor().process(exchange);
-            } catch(Exception e) {
-                exchange.setException(e);
+            } catch(Throwable t) {
+                exchange.setException(t);
             }
             
             //Send a reply if one was requested
-            Address replyToAddress = message.getMessageProperties().getReplyToAddress();
+            Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
             if(replyToAddress != null) {
-                endpoint.getAmqpTemplate().convertAndSend(
-                        replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), 
-                        exchange.getOut().getBody(), new SpringAMQPProducer.HeadersPostProcessor(exchange.getOut()));
+                SpringAMQPMessage outMessage = exchange.getOut(SpringAMQPMessage.class);
+                endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), outMessage.toAMQPMessage(msgConverter));
             }
         }
     }
