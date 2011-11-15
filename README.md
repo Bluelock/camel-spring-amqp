@@ -7,11 +7,19 @@ This is implemented using Spring's AMQP project, so it should ultimately become 
 
 ## Usage
 
-URIs have the structure: 
+The simplest Fanout exchange can be defined as:
+
+`spring-amqp:<Exchange Name>`
+
+`spring-amqp:<Exchange Name>:<Queue Name>`
+
+Here a simple message producer will send a message to Exchange Name, and a simple consumer will bind the Exchange Name to the Queue Name.
+
+If you wish to use a routing key, URIs have the structure: 
 
 `spring-amqp:<Exchange Name>:<Queue Name>:<Routing Key>?type=<Exchange Type>&durable=false&autodelete=true&exclusive=false`
 
-The routing key is optional, but Queue Name and Exchange Name are required for consumers.
+The routing key is optional, but Queue Name and Exchange Name are required for consumers. Just the Exchange Name is required for producers.
 
 Options to the URI include the exchange type, which defaults to direct if none is specified.
 

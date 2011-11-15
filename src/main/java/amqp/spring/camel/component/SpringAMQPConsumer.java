@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Address;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.HeadersExchange;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
@@ -75,8 +76,12 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             else
                 this.binding = mapConfig.whereAll(keyValues).match();
             
-        //This is not a header exchange, perform routing key binding
-        } else if(this.endpoint.getRoutingKey() != null) {
+        //Is this a fanout exchange? Just bind the queue and exchange directly
+        } else if(exchange instanceof FanoutExchange) { 
+            this.binding = BindingBuilder.bind(this.queue).to((FanoutExchange) exchange);
+        
+        //Perform routing key binding for direct or topic exchanges
+        } else {
             this.binding = BindingBuilder.bind(this.queue).to(exchange).with(this.endpoint.routingKey).noargs();
         }
         

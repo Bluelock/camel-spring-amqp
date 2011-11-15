@@ -80,6 +80,9 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         //We have only 2 parameters. Is this a routing key or a queue? We don't know yet.
         } else if(tokens.size() == 2) {
             this.tempQueueOrKey = tokens.get(1);
+        //We only have the exchange name - that's it. This must be a fanout producer.
+        } else {
+            this.exchangeType = "fanout";
         }
     }
 
@@ -102,9 +105,10 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         if(this.exchangeName == null)
             throw new IllegalStateException("Cannot have null exchange name");
 
-        //Aha! We're a consumer, so the second argument was a queue name.
+        //Aha! We're a consumer, so the second argument was a queue name. This is a fanout exchange.
         if(this.tempQueueOrKey != null) {
             this.queueName = this.tempQueueOrKey;
+            this.exchangeType = "fanout";
             this.tempQueueOrKey = null;
         }
         
