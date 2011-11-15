@@ -58,16 +58,6 @@ public class SpringAMQPProducer extends DefaultProducer {
         LOG.info("Declared exchange {}", this.exchange.getName());
     }
 
-    @Override
-    public void stop() throws Exception {
-        if(this.endpoint.amqpAdministration != null && this.exchange != null) {
-            this.endpoint.amqpAdministration.deleteExchange(this.exchange.getName());
-            LOG.info("Deleted exchange {}", this.exchange.getName());
-        }
-        
-        super.stop();
-    }
-    
     private static class HeadersPostProcessor implements MessagePostProcessor {
         public org.apache.camel.Message camelMessage;
         

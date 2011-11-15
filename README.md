@@ -31,11 +31,13 @@ Which will create a binding for headers where "cheese" has the value of "gouda" 
 
  - Transactions are currently not supported
 
- - The component is currently undergoing integration testing but has not yet been tested in a production environment
+ - TTLs have not yet been implemented
+
+ - Lifecycle events (e.g. stop, shutdown) need to be refined
 
  - Unit tests require a running AMQP broker. I may end up creating a VM local Qpid instance as an AMQP broker...
 
- - TTLs have not yet been implemented
+ - The component is currently undergoing integration testing but has not yet been tested in a production environment
 
 ## License
 
