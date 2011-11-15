@@ -63,7 +63,7 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
         CachingConnectionFactory factory = new CachingConnectionFactory();
         RabbitTemplate amqpTemplate = new RabbitTemplate(factory);
         //The JSON converter stresses marshalling more than the default converter
-        amqpTemplate.setMessageConverter(new JsonMessageConverter());
+//        amqpTemplate.setMessageConverter(new JsonMessageConverter());
         SpringAMQPComponent amqpComponent = new SpringAMQPComponent(factory);
         amqpComponent.setAmqpTemplate(amqpTemplate);
         

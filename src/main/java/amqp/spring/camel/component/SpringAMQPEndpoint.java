@@ -15,6 +15,7 @@
  */
 package amqp.spring.camel.component;
 
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 import org.apache.camel.Consumer;
 import org.apache.camel.Processor;
@@ -56,26 +57,29 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     boolean transactional = false;
     int concurrentConsumers = 1;
     
+    //The second and third parameters to the URI can be interchangable based on the context.
+    //Place them here until we determine if we're a consumer or producer.
+    private String tempQueueOrKey;
+    
     public SpringAMQPEndpoint(String remaining, AmqpTemplate template, AmqpAdmin admin) {
         LOG.info("Creating endpoint for {}", remaining);
         this.amqpAdministration = admin;
         this.amqpTemplate = template;
         
-        String[] tokens = new String[3];
+        ArrayList<String> tokens = new ArrayList<String>();
         StringTokenizer uriTokenizer = new StringTokenizer(remaining, ":");
-        if(uriTokenizer.hasMoreTokens())
-            tokens[0] = uriTokenizer.nextToken();
-        if(uriTokenizer.hasMoreTokens())
-            tokens[1] = uriTokenizer.nextToken();
-        if(uriTokenizer.hasMoreTokens())
-            tokens[2] = uriTokenizer.nextToken();
+        while(uriTokenizer.hasMoreTokens())
+            tokens.add(uriTokenizer.nextToken());
         
-        this.exchangeName = tokens[0] == null ? "" : tokens[0]; //Per spec expected default is empty string
-        if(tokens[2] == null) { //Producers need only specify exchange. Routing key optional.
-            this.routingKey = tokens[1];
-        } else { //Consumers must specify exchange, queue and routing key in that order
-            this.queueName = tokens[1];
-            this.routingKey = tokens[2];
+        //Per spec expected default is empty string
+        this.exchangeName = tokens.isEmpty() || tokens.get(0) == null ? "" : tokens.get(0); 
+        //Consumers must specify exchange, queue and routing key in that order
+        if(tokens.size() > 2) { 
+            this.queueName = tokens.get(1);
+            this.routingKey = tokens.get(2);
+        //We have only 2 parameters. Is this a routing key or a queue? We don't know yet.
+        } else if(tokens.size() == 2) {
+            this.tempQueueOrKey = tokens.get(1);
         }
     }
 
@@ -84,6 +88,12 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         if(this.exchangeName == null)
             throw new IllegalStateException("Cannot have null exchange name");
         
+        //Aha! We're a producer, so the second argument was a routing key.
+        if(this.tempQueueOrKey != null) {
+            this.routingKey = this.tempQueueOrKey;
+            this.tempQueueOrKey = null;
+        }
+        
         return new SpringAMQPProducer(this);
     }
 
@@ -91,8 +101,15 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     public Consumer createConsumer(Processor processor) throws Exception {
         if(this.exchangeName == null)
             throw new IllegalStateException("Cannot have null exchange name");
+
+        //Aha! We're a consumer, so the second argument was a queue name.
+        if(this.tempQueueOrKey != null) {
+            this.queueName = this.tempQueueOrKey;
+            this.tempQueueOrKey = null;
+        }
+        
         if(this.queueName == null)
-            throw new IllegalStateException("Cannot have null queue name for exchange "+this.exchangeName);
+            throw new IllegalStateException("Cannot have null queue name for "+getEndpointUri());
         
         return new SpringAMQPConsumer(this, processor);
     }
@@ -193,7 +210,19 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     @Override
     protected String createEndpointUri() {
-        return "spring-amqp:"+this.exchangeName+":"+this.routingKey;
+        StringBuilder builder = new StringBuilder("spring-amqp:").append(this.exchangeName);
+        if(this.queueName != null)
+            builder.append(":").append(this.queueName);
+        if(this.routingKey != null)
+            builder.append(":").append(this.routingKey);
+        builder.append("?").append("type=").append(this.exchangeType);
+        builder.append("&autodelete=").append(this.autodelete);
+        builder.append("&concurrentConsumers=").append(this.concurrentConsumers);
+        builder.append("&durable=").append(this.durable);
+        builder.append("&exclusive=").append(this.exclusive);
+        builder.append("&transactional=").append(this.transactional);
+        
+        return builder.toString();        
     }
     
     org.springframework.amqp.core.Exchange createAMQPExchange() {

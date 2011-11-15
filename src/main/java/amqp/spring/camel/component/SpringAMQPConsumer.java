@@ -26,6 +26,7 @@ import org.apache.camel.impl.DefaultConsumer;
 import org.apache.camel.impl.DefaultExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.Address;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.HeadersExchange;
@@ -75,12 +76,14 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                 this.binding = mapConfig.whereAll(keyValues).match();
             
         //This is not a header exchange, perform routing key binding
-        } else {
+        } else if(this.endpoint.getRoutingKey() != null) {
             this.binding = BindingBuilder.bind(this.queue).to(exchange).with(this.endpoint.routingKey).noargs();
         }
         
-        this.endpoint.getAmqpAdministration().declareBinding(binding);
-        LOG.info("Declared binding {}", this.binding.getRoutingKey());
+        if(this.binding != null) {
+            this.endpoint.getAmqpAdministration().declareBinding(binding);
+            LOG.info("Declared binding {}", this.binding.getRoutingKey());
+        }
         
         this.messageListener.start();
     }
@@ -141,23 +144,27 @@ public class SpringAMQPConsumer extends DefaultConsumer {
 
         @Override
         public void onMessage(Message message) {
+            LOG.trace("Received message for routing key {}", message.getMessageProperties().getReceivedRoutingKey());
+
+            Object body = msgConverter.fromMessage(message);
+
+            Exchange exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
+            exchange.getIn().setBody(body);
+            for(Entry<String, Object> headerEntry : message.getMessageProperties().getHeaders().entrySet())
+                exchange.getIn().setHeader(headerEntry.getKey(), headerEntry.getValue());
+
             try {
-                LOG.trace("Received message for routing key {}", message.getMessageProperties().getReceivedRoutingKey());
-
-                Object body = msgConverter.fromMessage(message);
-
-                Exchange exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
-                exchange.getIn().setBody(body);
-                for(Entry<String, Object> headerEntry : message.getMessageProperties().getHeaders().entrySet())
-                    exchange.getIn().setHeader(headerEntry.getKey(), headerEntry.getValue());
-
                 getProcessor().process(exchange);
-            } catch (IOException e) {
-                LOG.error("Error when attempting to speak with RabbitMQ", e);
-            } catch (InterruptedException e) {
-                LOG.warn("Thread was interrupted while waiting for message consumption", e);
-            } catch (Exception e) {
-                LOG.warn("General exception during Camel handoff, Processor returned error", e);
+            } catch(Exception e) {
+                exchange.setException(e);
+            }
+            
+            //Send a reply if one was requested
+            Address replyToAddress = message.getMessageProperties().getReplyToAddress();
+            if(replyToAddress != null) {
+                endpoint.getAmqpTemplate().convertAndSend(
+                        replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), 
+                        exchange.getOut().getBody(), new SpringAMQPProducer.HeadersPostProcessor(exchange.getOut()));
             }
         }
     }

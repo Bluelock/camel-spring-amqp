@@ -20,6 +20,8 @@ import java.util.Map;
 import javax.annotation.Resource;
 import org.apache.camel.CamelContext;
 import org.apache.camel.EndpointInject;
+import org.apache.camel.Exchange;
+import org.apache.camel.Handler;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.component.mock.MockEndpoint;
 import org.junit.Assert;
@@ -33,7 +35,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 //TODO Try having unit tests talk to a VM local AMQP broker (like a Qpid broker)
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
-@Component("testSpringXML")
+@Component
 public class SpringXMLTest {
     @Resource
     protected ProducerTemplate template;
@@ -54,9 +56,8 @@ public class SpringXMLTest {
     public void testHappyPath() throws Exception {
         testOne.expectedMessageCount(1);
         testOne.expectedBodiesReceived("HELLO WORLD");
-        Object response = template.requestBody("direct:stepOne", "HELLO WORLD");
+        template.sendBody("direct:stepOne", "HELLO WORLD");
         testOne.assertIsSatisfied();
-        Assert.assertNotNull(response);
     }
     
     @Test
@@ -68,8 +69,18 @@ public class SpringXMLTest {
         headers.put("key1", "value1");
         headers.put("key2", "value2");
         
-        Object response = template.requestBodyAndHeaders("direct:stepTwo", "HELLO HEADERS", headers);
+        template.sendBodyAndHeaders("direct:stepTwo", "HELLO HEADERS", headers);
         testTwo.assertIsSatisfied();
-        Assert.assertNotNull(response);
+    }
+    
+    @Test
+    public void testRequestReply() throws Exception {
+        String response = template.requestBody("direct:stepThree", "REQUEST", String.class);
+        Assert.assertEquals("RESPONSE", response);
+    }
+    
+    @Handler
+    public void handle(Exchange exchange) {
+        exchange.getOut().setBody("RESPONSE");
     }
 }

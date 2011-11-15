@@ -16,16 +16,15 @@
 package amqp.spring.camel.component;
 
 import java.util.Map.Entry;
-import org.apache.camel.AsyncCallback;
 import org.apache.camel.Exchange;
-import org.apache.camel.impl.DefaultAsyncProducer;
+import org.apache.camel.impl.DefaultProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessagePostProcessor;
 
-public class SpringAMQPProducer extends DefaultAsyncProducer {
+public class SpringAMQPProducer extends DefaultProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
     
     protected SpringAMQPEndpoint endpoint;
@@ -59,25 +58,6 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     }
 
     @Override
-    public boolean process(Exchange exchange, AsyncCallback callback) {
-        if(exchange.getPattern().isOutCapable()) {
-            LOG.debug("Asynchronous send and request for exchange {}", exchange.getExchangeId());
-            new Thread(new AsyncResponseTask(exchange, callback)).start();
-            return false;
-        } else {
-            try {
-                process(exchange);
-            } catch(Exception e) {
-                exchange.setException(e);
-            } finally {
-                callback.done(true);
-            }
-        
-            return true;
-        }
-    }
-
-    @Override
     public void start() throws Exception {
         super.start();
         
@@ -86,7 +66,7 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         LOG.info("Declared exchange {}", this.exchange.getName());
     }
 
-    private static class HeadersPostProcessor implements MessagePostProcessor {
+    public static class HeadersPostProcessor implements MessagePostProcessor {
         public org.apache.camel.Message camelMessage;
         
         public HeadersPostProcessor(org.apache.camel.Message camelMessage) {
@@ -103,35 +83,4 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
             
             return msg;
         }
-    }
-    
-    private class AsyncResponseTask implements Runnable {
-        Exchange exchange;
-        AsyncCallback callback;
-        
-        public AsyncResponseTask(Exchange exchange, AsyncCallback callback) {
-            this.exchange = exchange;
-            this.callback = callback;
-        }
-
-        @Override
-        public void run() {
-            MessagePostProcessor headerProcessor = new HeadersPostProcessor(this.exchange.getIn());
-            Object body = this.exchange.getIn().getBody();
-            if(body == null) {
-                LOG.warn("Exchange {} had a null body, creating an empty byte array", this.exchange.getExchangeId());
-                body = new byte[] {};
-            }
-        
-            exchange.getOut().copyFrom(exchange.getIn());
-            try {
-                Object response = endpoint.getAmqpTemplate().convertSendAndReceive(endpoint.getExchangeName(), endpoint.getRoutingKey(), body, headerProcessor);
-                exchange.getOut().setBody(response);
-            } catch (Exception e) {
-                this.exchange.setException(e);
-            } finally {
-                callback.done(false);
-            }
-        }
-    }
-}
+    }}
