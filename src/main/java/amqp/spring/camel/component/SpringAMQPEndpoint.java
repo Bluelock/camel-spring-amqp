@@ -108,8 +108,9 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         //Aha! We're a consumer, so the second argument was a queue name. This is a fanout exchange.
         if(this.tempQueueOrKey != null) {
             this.queueName = this.tempQueueOrKey;
-            this.exchangeType = "fanout";
             this.tempQueueOrKey = null;
+            if(this.exchangeType == null)
+                this.exchangeType = "fanout";
         }
         
         if(this.queueName == null)

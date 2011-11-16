@@ -64,6 +64,9 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         
         //Is this a header exchange? Bind the key/value pair(s)
         if(exchange instanceof HeadersExchange) { 
+            if(this.endpoint.routingKey == null)
+                throw new IllegalStateException("Specified a header exchange without a key/value match");
+            
             if(this.endpoint.routingKey.contains("|") && this.endpoint.routingKey.contains("&"))
                 throw new IllegalArgumentException("You cannot mix AND and OR expressions within a header binding");
         
