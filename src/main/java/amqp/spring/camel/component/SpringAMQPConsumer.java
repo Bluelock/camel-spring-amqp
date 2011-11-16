@@ -18,12 +18,14 @@ package amqp.spring.camel.component;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import org.aopalliance.aop.Advice;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.impl.DefaultConsumer;
 import org.apache.camel.impl.DefaultExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Address;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -32,9 +34,15 @@ import org.springframework.amqp.core.HeadersExchange;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.config.StatefulRetryOperationsInterceptorFactoryBean;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.retry.RetryContext;
+import org.springframework.retry.RetryPolicy;
+import org.springframework.retry.policy.NeverRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.util.ErrorHandler;
 
 public class SpringAMQPConsumer extends DefaultConsumer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPConsumer.class);
@@ -47,7 +55,8 @@ public class SpringAMQPConsumer extends DefaultConsumer {
     public SpringAMQPConsumer(SpringAMQPEndpoint endpoint, Processor processor) {
         super(endpoint, processor);
         this.endpoint = endpoint;
-        this.messageListener = new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate(), this.endpoint.queueName, this.endpoint.getConcurrentConsumers());
+        this.messageListener = new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate(), 
+                this.endpoint.queueName, this.endpoint.getConcurrentConsumers(), this.endpoint.getPrefetchCount());
     }
 
     @Override
@@ -127,12 +136,16 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         private MessageConverter msgConverter;
         private SimpleMessageListenerContainer listenerContainer;
         
-        public RabbitMQConsumerTask(RabbitTemplate template, String queue, int concurrentConsumers) {
+        public RabbitMQConsumerTask(RabbitTemplate template, String queue, int concurrentConsumers, int prefetchCount) {
             this.msgConverter = template.getMessageConverter();
             this.listenerContainer = new SimpleMessageListenerContainer();
             this.listenerContainer.setConnectionFactory(template.getConnectionFactory());
             this.listenerContainer.setQueueNames(queue);
             this.listenerContainer.setConcurrentConsumers(concurrentConsumers);
+            this.listenerContainer.setAcknowledgeMode(AcknowledgeMode.AUTO);
+            this.listenerContainer.setErrorHandler(getErrorHandler());
+            this.listenerContainer.setPrefetchCount(prefetchCount);
+            this.listenerContainer.setAdviceChain(getAdviceChain());
         }
         
         public void start() {
@@ -146,6 +159,23 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         
         public void shutdown() {
             this.listenerContainer.shutdown();
+        }
+
+        public final ErrorHandler getErrorHandler() {
+            return new ErrorHandler() {
+                @Override
+                public void handleError(Throwable t) {
+                    getExceptionHandler().handleException(t);
+                }
+            };
+        }
+        
+        public final Advice[] getAdviceChain() {
+            RetryTemplate retryRule = new RetryTemplate();
+            retryRule.setRetryPolicy(new NeverRetryPolicy());
+            StatefulRetryOperationsInterceptorFactoryBean retryOperation = new StatefulRetryOperationsInterceptorFactoryBean();
+            retryOperation.setRetryOperations(retryRule);
+            return new Advice[] { retryOperation.getObject() };
         }
 
         @Override

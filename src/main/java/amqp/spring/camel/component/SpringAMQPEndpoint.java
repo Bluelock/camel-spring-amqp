@@ -56,6 +56,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     boolean autodelete = true;
     boolean transactional = false;
     int concurrentConsumers = 1;
+    int prefetchCount = 1;
     
     //The second and third parameters to the URI can be interchangable based on the context.
     //Place them here until we determine if we're a consumer or producer.
@@ -133,6 +134,14 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     public void setAmqpTemplate(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
+    }
+
+    public int getPrefetchCount() {
+        return prefetchCount;
+    }
+
+    public void setPrefetchCount(int prefetchCount) {
+        this.prefetchCount = prefetchCount;
     }
 
     public int getConcurrentConsumers() {
