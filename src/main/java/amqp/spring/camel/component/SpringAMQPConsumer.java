@@ -38,8 +38,6 @@ import org.springframework.amqp.rabbit.config.StatefulRetryOperationsInterceptor
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.retry.RetryContext;
-import org.springframework.retry.RetryPolicy;
 import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.ErrorHandler;
@@ -182,10 +180,11 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         public void onMessage(Message amqpMessage) {
             LOG.debug("Received message for routing key {}", amqpMessage.getMessageProperties().getReceivedRoutingKey());
 
+            Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
             SpringAMQPMessage camelMessage = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpMessage);
             Exchange exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
             exchange.setIn(camelMessage);
-
+            
             try {
                 getProcessor().process(exchange);
             } catch(Throwable t) {
@@ -193,7 +192,6 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             }
             
             //Send a reply if one was requested
-            Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
             if(replyToAddress != null) {
                 SpringAMQPMessage outMessage = exchange.getOut(SpringAMQPMessage.class);
                 endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), outMessage.toAMQPMessage(msgConverter));
