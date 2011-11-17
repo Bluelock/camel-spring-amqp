@@ -66,14 +66,17 @@ public class JSONMessageConverter extends AbstractMessageConverter {
             classMapper.fromClass(object.getClass(), messageProperties);
             return new Message(body, messageProperties);
         } catch (JsonGenerationException ex) {
-            LOG.error("JsonGenerationException trying to marshal message of type {}", object.getClass().getCanonicalName(), ex);
-            throw new MessageConversionException("Could not marshal message of type "+object.getClass().getCanonicalName(), ex);
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("JsonGenerationException trying to marshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not marshal message of type "+typeId, ex);
         } catch (JsonMappingException ex) {
-            LOG.error("JsonMappingException trying to jarshal message of type {}", object.getClass().getCanonicalName(), ex);
-            throw new MessageConversionException("Could not marshal message of type "+object.getClass().getCanonicalName(), ex);
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("JsonMappingException trying to jarshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not marshal message of type "+typeId, ex);
         } catch (IOException ex) {
-            LOG.error("IOException trying to marshal message of type {}", object.getClass().getCanonicalName(), ex);
-            throw new MessageConversionException("Could not marshal message of type "+object.getClass().getCanonicalName(), ex);
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("IOException trying to marshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not marshal message of type "+typeId, ex);
         }
     }
 
@@ -101,14 +104,17 @@ public class JSONMessageConverter extends AbstractMessageConverter {
             String json = new String(body, messageEncoding);
             return this.objectMapper.readValue(json, bodyClass);
         } catch (JsonParseException ex) {
-            LOG.error("JsonParseException trying to unmarshal message of type {}", bodyClass.getCanonicalName(), ex);
-            throw new MessageConversionException("Could not unmarshal message of type "+bodyClass.getCanonicalName(), ex);
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("JsonParseException trying to unmarshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not unmarshal message of type "+typeId, ex);
         } catch (JsonMappingException ex) {
-            LOG.error("JsonMappingException trying to unmarshal message of type {}", bodyClass.getCanonicalName(), ex);
-            throw new MessageConversionException("Could not unmarshal message of type "+bodyClass.getCanonicalName(), ex);
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("JsonMappingException trying to unmarshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not unmarshal message of type "+typeId, ex);
         } catch (IOException ex) {
-            LOG.error("IOException trying to unmarshal message of type {}", bodyClass.getCanonicalName(), ex);
-            throw new MessageConversionException("Could not unmarshal message of type "+bodyClass.getCanonicalName(), ex);
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("IOException trying to unmarshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not unmarshal message of type "+typeId, ex);
         }
     }
 }
