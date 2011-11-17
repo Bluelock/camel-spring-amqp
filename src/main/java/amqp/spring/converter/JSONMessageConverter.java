@@ -18,6 +18,7 @@ package amqp.spring.converter;
 import java.io.IOException;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
@@ -37,8 +38,9 @@ public class JSONMessageConverter extends AbstractMessageConverter {
     protected String encoding = "UTF-8";
     
     public JSONMessageConverter() {
-        this.objectMapper = new ObjectMapper();
         this.classMapper = new DefaultClassMapper();
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     public String getEncoding() {
