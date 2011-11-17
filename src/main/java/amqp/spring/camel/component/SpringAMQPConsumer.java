@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import org.aopalliance.aop.Advice;
 import org.apache.camel.Exchange;
+import org.apache.camel.ExchangePattern;
 import org.apache.camel.Processor;
 import org.apache.camel.impl.DefaultConsumer;
 import org.apache.camel.impl.DefaultExchange;
@@ -182,7 +183,14 @@ public class SpringAMQPConsumer extends DefaultConsumer {
 
             Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
             SpringAMQPMessage camelMessage = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpMessage);
-            Exchange exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
+            ExchangePattern exchangePattern = endpoint.getExchangePattern();
+            Exchange exchange;
+            if(replyToAddress != null && ! exchangePattern.isOutCapable()) {
+                //If we are in-only but requested a reply, fudge the exchange pattern to oblige
+                exchange = new DefaultExchange(endpoint, ExchangePattern.InOptionalOut);
+            } else {
+                exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
+            }
             exchange.setIn(camelMessage);
             
             try {
