@@ -89,8 +89,11 @@ public class SpringAMQPMessage extends DefaultMessage {
             if(camelMessage == null || camelMessage.getHeaders() == null)
                 return msg;
                         
-            for(Entry<String, Object> headerEntry : camelMessage.getHeaders().entrySet())
-                msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
+            for(Entry<String, Object> headerEntry : camelMessage.getHeaders().entrySet()) {
+                if(! msg.getMessageProperties().getHeaders().containsKey(headerEntry.getKey()))
+                    msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
+            }
+                
             
             return msg;
         }
