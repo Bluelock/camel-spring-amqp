@@ -74,6 +74,21 @@ Parameters available include:
     </tr>
 </table>
 
+## Spring Integration
+
+The camel-spring-amqp component will attempt to fetch as much information from the application context it sits within. 
+For example, if we are using Spring we could issue the following:
+
+`<bean id="messageConverter" class="amqp.spring.converter.XStreamConverter"/>
+ <rabbit:connection-factory id="connectionFactory"/>
+ <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="messageConverter"/>
+ <rabbit:admin connection-factory="connectionFactory"/>`
+
+The message converter amqp.spring.converter.XStreamConverter is provided by the camel-spring-amqp component; it provides
+JSON marshalling using the XStream libraries. If you would rather use the Jackson JSON marshalling (or another
+conversion method) provided by the Spring AMQP framework, you can swap out the appropriate message converter class 
+in the above example.
+
 ## Limitations
 
  - Transactions are currently not supported
