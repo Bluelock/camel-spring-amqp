@@ -17,14 +17,14 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>deckerego</groupId>
+    <groupId>com.bluelock</groupId>
     <artifactId>camel-spring-amqp</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Camel :: Spring-AMQP</name>
     <description>Camel Spring-AMQP support</description>
-    <url>https://github.com/deckerego/camel-spring-amqp</url>
+    <url>https://github.com/com.bluelock/camel-spring-amqp</url>
 
     <licenses>
         <license>
@@ -35,7 +35,7 @@
     </licenses>
     
     <scm>
-        <url>git@github.com:deckerego/camel-spring-amqp.git</url>
+        <url>git@github.com:com.bluelock/camel-spring-amqp.git</url>
     </scm>
   
     <properties>
