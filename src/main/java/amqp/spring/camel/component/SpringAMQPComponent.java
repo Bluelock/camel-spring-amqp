@@ -77,7 +77,7 @@ public class SpringAMQPComponent extends DefaultComponent {
     }
 
     public AmqpAdmin getAmqpAdministration() {
-        if(this.amqpAdministration == null) {
+        if(this.amqpAdministration == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
             //Attempt to load an administration connection from the registry
             Map<String, AmqpAdmin> factories = getCamelContext().getRegistry().lookupByType(AmqpAdmin.class);
             if(factories != null && ! factories.isEmpty()) {
@@ -100,7 +100,7 @@ public class SpringAMQPComponent extends DefaultComponent {
     }
 
     public AmqpTemplate getAmqpTemplate() {
-        if(this.amqpTemplate == null) {
+        if(this.amqpTemplate == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
             //Attempt to load an AMQP template from the registry
             Map<String, AmqpTemplate> factories = getCamelContext().getRegistry().lookupByType(AmqpTemplate.class);
             if(factories != null && ! factories.isEmpty()) {
