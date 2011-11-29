@@ -37,7 +37,10 @@ public class SpringAMQPProducer extends DefaultProducer {
 
     @Override
     public void process(Exchange exchange) throws Exception {
-        SpringAMQPMessage message = exchange.getIn(SpringAMQPMessage.class);
+        org.apache.camel.Message message = exchange.getIn();
+        SpringAMQPMessage inMessage = new SpringAMQPMessage();
+        inMessage.copyFrom(message);
+        
         MessageConverter msgConverter;
         if(this.endpoint.getAmqpTemplate() instanceof RabbitTemplate) {
             RabbitTemplate rabbitTemplate = (RabbitTemplate) this.endpoint.getAmqpTemplate();
@@ -49,12 +52,12 @@ public class SpringAMQPProducer extends DefaultProducer {
         
         if(exchange.getPattern().isOutCapable()) {
             LOG.debug("Synchronous send and request for exchange {}", exchange.getExchangeId());
-            Message amqpResponse = this.endpoint.getAmqpTemplate().sendAndReceive(this.endpoint.exchangeName, this.endpoint.routingKey, message.toAMQPMessage(msgConverter));
+            Message amqpResponse = this.endpoint.getAmqpTemplate().sendAndReceive(this.endpoint.exchangeName, this.endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
             SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
             exchange.setOut(camelResponse);
         } else {
             LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
-            this.endpoint.getAmqpTemplate().send(this.endpoint.exchangeName, this.endpoint.routingKey, message.toAMQPMessage(msgConverter));
+            this.endpoint.getAmqpTemplate().send(this.endpoint.exchangeName, this.endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
         }
     }
 

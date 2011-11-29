@@ -201,14 +201,11 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             
             //Send a reply if one was requested
             if(replyToAddress != null) {
-                SpringAMQPMessage outMessage = exchange.getOut(SpringAMQPMessage.class);
-                if(outMessage == null) {
-                    Object rawOutMessage = exchange.getOut();
-                    String outClass = rawOutMessage == null ? "<null>" : rawOutMessage.getClass().getCanonicalName();
-                    throw new RuntimeException("Could not reply to message, cannot convert "+outClass);
-                }
+                org.apache.camel.Message outMessage = exchange.getOut();
+                SpringAMQPMessage replyMessage = new SpringAMQPMessage();
+                replyMessage.copyFrom(outMessage);
                 
-                endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), outMessage.toAMQPMessage(msgConverter));
+                endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), replyMessage.toAMQPMessage(msgConverter));
             }
         }
     }
