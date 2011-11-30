@@ -38,8 +38,8 @@ public class SpringAMQPProducer extends DefaultProducer {
     @Override
     public void process(Exchange exchange) throws Exception {
         org.apache.camel.Message message = exchange.getIn();
-        SpringAMQPMessage inMessage = new SpringAMQPMessage();
-        inMessage.copyFrom(message);
+        SpringAMQPMessage inMessage = new SpringAMQPMessage(message);
+        exchange.setIn(inMessage); //Swap out the old message format
         
         MessageConverter msgConverter;
         if(this.endpoint.getAmqpTemplate() instanceof RabbitTemplate) {

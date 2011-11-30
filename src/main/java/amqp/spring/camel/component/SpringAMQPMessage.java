@@ -35,6 +35,11 @@ public class SpringAMQPMessage extends DefaultMessage {
         super();
     }
 
+    public SpringAMQPMessage(org.apache.camel.Message source) {
+        super();
+        if(source != null) copyFrom(source);
+    }
+
     public static SpringAMQPMessage fromAMQPMessage(MessageConverter msgConverter, org.springframework.amqp.core.Message amqpMessage) {
         if(amqpMessage == null) {
             LOG.warn("Received NULL AMQP Message, returning null");
@@ -116,6 +121,8 @@ public class SpringAMQPMessage extends DefaultMessage {
             if(camelMessage.getExchange() != null) {
                 String exchangePattern = camelMessage.getExchange().getPattern().name();
                 msg.getMessageProperties().setHeader(EXCHANGE_PATTERN, exchangePattern);
+            } else {
+                LOG.warn("No exchange was found for this message {}", camelMessage.getMessageId());
             }
             
             return msg;
