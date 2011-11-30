@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import org.aopalliance.aop.Advice;
+import org.apache.camel.CamelExchangeException;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.Processor;
@@ -180,17 +181,9 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         @Override
         public void onMessage(Message amqpMessage) {
             LOG.debug("Received message for routing key {}", amqpMessage.getMessageProperties().getReceivedRoutingKey());
-
-            Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
+            ExchangePattern exchangePattern = SpringAMQPMessage.getExchangePattern(amqpMessage);
+            Exchange exchange = new DefaultExchange(endpoint, exchangePattern);
             SpringAMQPMessage camelMessage = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpMessage);
-            ExchangePattern exchangePattern = endpoint.getExchangePattern();
-            Exchange exchange;
-            if(replyToAddress != null && ! exchangePattern.isOutCapable()) {
-                //If we are in-only but requested a reply, fudge the exchange pattern to oblige
-                exchange = new DefaultExchange(endpoint, ExchangePattern.InOptionalOut);
-            } else {
-                exchange = new DefaultExchange(endpoint, endpoint.getExchangePattern());
-            }
             exchange.setIn(camelMessage);
             
             try {
@@ -200,6 +193,7 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             }
             
             //Send a reply if one was requested
+            Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
             if(replyToAddress != null) {
                 org.apache.camel.Message outMessage = exchange.getOut();
                 SpringAMQPMessage replyMessage = new SpringAMQPMessage();

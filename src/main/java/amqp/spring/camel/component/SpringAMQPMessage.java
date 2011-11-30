@@ -16,6 +16,7 @@
 package amqp.spring.camel.component;
 
 import java.util.Map.Entry;
+import org.apache.camel.ExchangePattern;
 import org.apache.camel.impl.DefaultMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,8 @@ import org.springframework.amqp.support.converter.MessageConverter;
 
 public class SpringAMQPMessage extends DefaultMessage {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPMessage.class);
+    
+    public static final String EXCHANGE_PATTERN = "CamelExchangePattern";
     
     public SpringAMQPMessage() {
         super();
@@ -40,6 +43,7 @@ public class SpringAMQPMessage extends DefaultMessage {
         
         SpringAMQPMessage message = new SpringAMQPMessage();
         
+        //Restore the body based on the message converter provided
         if(amqpMessage.getBody() == null || 
                 (amqpMessage.getBody() instanceof byte[] && ((byte[]) amqpMessage.getBody()).length == 0)) {
             message.setBody(null);
@@ -52,10 +56,24 @@ public class SpringAMQPMessage extends DefaultMessage {
             message.setBody(msgConverter.fromMessage(amqpMessage));
         }
         
-        for(Entry<String, Object> headerEntry : amqpMessage.getMessageProperties().getHeaders().entrySet())
-            message.setHeader(headerEntry.getKey(), headerEntry.getValue());
+        //We have the body, now restore the headers
+        for(Entry<String, Object> headerEntry : amqpMessage.getMessageProperties().getHeaders().entrySet()) {
+            if(! EXCHANGE_PATTERN.equals(headerEntry.getKey())) {
+                message.setHeader(headerEntry.getKey(), headerEntry.getValue());
+            }
+        }
         
         return message;
+    }
+    
+    public static ExchangePattern getExchangePattern(org.springframework.amqp.core.Message amqpMessage) {
+        String exchangePatternName;
+        
+        exchangePatternName = (String) amqpMessage.getMessageProperties().getHeaders().get(EXCHANGE_PATTERN);
+        if(exchangePatternName == null) //Safe default
+            exchangePatternName = ExchangePattern.InOptionalOut.name();
+        
+        return ExchangePattern.valueOf(exchangePatternName);
     }
 
     public Message toAMQPMessage(MessageConverter msgConverter) {
@@ -93,7 +111,12 @@ public class SpringAMQPMessage extends DefaultMessage {
                 if(! msg.getMessageProperties().getHeaders().containsKey(headerEntry.getKey()))
                     msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
             }
-                
+            
+            //Set the exchange pattern so we can re-set it upon receipt
+            if(camelMessage.getExchange() != null) {
+                String exchangePattern = camelMessage.getExchange().getPattern().name();
+                msg.getMessageProperties().setHeader(EXCHANGE_PATTERN, exchangePattern);
+            }
             
             return msg;
         }
