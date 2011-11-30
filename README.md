@@ -2,7 +2,7 @@
 
 ## Introduction
 
-An [Apache Camel](http://camel.apache.org/ "Apache Camel") Component that will natively communicate with a [RabbitMQ](http://www.rabbitmq.com/ "RabbitMQ") broker. 
+An [Apache Camel](http://camel.apache.org/) Component that will natively communicate with a [RabbitMQ](http://www.rabbitmq.com/ "RabbitMQ") broker. 
 This is implemented using Spring's AMQP project, so it should ultimately become vendor-agnostic.
 
 ## Usage
@@ -88,6 +88,19 @@ The message converter amqp.spring.converter.XStreamConverter is provided by the 
 JSON marshalling using the XStream libraries. If you would rather use the Jackson JSON marshalling (or another
 conversion method) provided by the Spring AMQP framework, you can swap out the appropriate message converter class 
 in the above example.
+
+## Downloads and Maven Repository
+
+Snapshot builds of the Camel Spring AMQP Component are hosted within [the Sonatype repository](https://oss.sonatype.org/index.html). 
+You can include this component within your Maven POM as:
+
+	<dependency>
+	    <groupId>com.bluelock</groupId>
+	    <artifactId>camel-spring-amqp</artifactId>
+	    <version>0.1-SNAPSHOT</version>
+	</dependency>
+
+The Sonatype OSS snapshot repository is located at https://oss.sonatype.org/content/repositories/snapshots/
 
 ## Limitations
 
