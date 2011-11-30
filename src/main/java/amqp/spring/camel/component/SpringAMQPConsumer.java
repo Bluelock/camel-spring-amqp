@@ -196,8 +196,8 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
             if(replyToAddress != null) {
                 org.apache.camel.Message outMessage = exchange.getOut();
-                SpringAMQPMessage replyMessage = new SpringAMQPMessage();
-                replyMessage.copyFrom(outMessage);
+                SpringAMQPMessage replyMessage = new SpringAMQPMessage(outMessage);
+                exchange.setOut(replyMessage); //Swap out the outbound message
                 
                 endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), replyMessage.toAMQPMessage(msgConverter));
             }

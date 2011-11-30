@@ -58,9 +58,13 @@ public class SpringAMQPMessageTest {
     @Test
     public void toAMQP() throws Exception {
         MessageConverter msgConverter = new StringMessageConverter();
+        
         SpringAMQPMessage camelMessage = new SpringAMQPMessage();
         camelMessage.setBody("Test Message 2");
         camelMessage.setHeader("Secret", "My Secret");
+        
+        Exchange exchange = new DefaultExchange(new DefaultCamelContext());
+        exchange.setIn(camelMessage);
         
         org.springframework.amqp.core.Message message = camelMessage.toAMQPMessage(msgConverter);
         Assert.assertEquals("Test Message 2", new String(message.getBody()));

@@ -122,7 +122,7 @@ public class SpringAMQPMessage extends DefaultMessage {
                 String exchangePattern = camelMessage.getExchange().getPattern().name();
                 msg.getMessageProperties().setHeader(EXCHANGE_PATTERN, exchangePattern);
             } else {
-                LOG.warn("No exchange was found for this message {}", camelMessage.getMessageId());
+                throw new IllegalStateException("No exchange was found for this message "+camelMessage.getMessageId());
             }
             
             return msg;
