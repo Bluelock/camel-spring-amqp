@@ -57,6 +57,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     boolean transactional = false;
     int concurrentConsumers = 1;
     int prefetchCount = 1;
+    Integer timeToLive = null;
     
     //The second and third parameters to the URI can be interchangable based on the context.
     //Place them here until we determine if we're a consumer or producer.
@@ -214,6 +215,14 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     public void setExclusive(boolean exclusive) {
         this.exclusive = exclusive;
+    }
+
+    public Integer getTimeToLive() {
+        return timeToLive;
+    }
+
+    public void setTimeToLive(Integer timeToLive) {
+        this.timeToLive = timeToLive;
     }
 
     @Override

@@ -116,6 +116,18 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         mockEndpointOne.assertIsSatisfied();
     }
     
+    @Test
+    public void sendMessageTTL() throws Exception {
+        MockEndpoint mockEndpoint = context().getEndpoint("mock:test.a", MockEndpoint.class);
+        mockEndpoint.expectedMessageCount(1);
+        context().createProducerTemplate().sendBodyAndHeader("spring-amqp:directExchange:test.a?durable=false&autodelete=true&exclusive=false&timeToLive=1000", "sendMessage", "HeaderKey", "HeaderValue");
+        
+        mockEndpoint.assertIsSatisfied();
+        Message inMessage = mockEndpoint.getExchanges().get(0).getIn();
+        Assert.assertEquals("sendMessage", inMessage.getBody(String.class));
+        Assert.assertEquals("HeaderValue", inMessage.getHeader("HeaderKey"));
+    }
+    
     @Override
     protected CamelContext createCamelContext() throws Exception {
         CachingConnectionFactory factory = new CachingConnectionFactory();

@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import org.aopalliance.aop.Advice;
-import org.apache.camel.CamelExchangeException;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.Processor;
@@ -46,6 +45,7 @@ import org.springframework.util.ErrorHandler;
 
 public class SpringAMQPConsumer extends DefaultConsumer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPConsumer.class);
+    private static final String TTL_QUEUE_ARGUMENT = "x-message-ttl";
     
     protected SpringAMQPEndpoint endpoint;
     private RabbitMQConsumerTask messageListener;
@@ -67,7 +67,13 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         this.endpoint.amqpAdministration.declareExchange(exchange);
         LOG.info("Declared exchange {}", exchange.getName());
 
-        this.queue = new Queue(this.endpoint.queueName, this.endpoint.durable, this.endpoint.exclusive, this.endpoint.autodelete);
+        //Determine queue arguments, including vendor extensions
+        Map<String, Object> queueArguments = new HashMap<String, Object>();
+        if(endpoint.getTimeToLive() != null)
+            queueArguments.put(TTL_QUEUE_ARGUMENT, endpoint.getTimeToLive());
+        
+        //Declare queue
+        this.queue = new Queue(this.endpoint.queueName, this.endpoint.durable, this.endpoint.exclusive, this.endpoint.autodelete, queueArguments);
         this.endpoint.getAmqpAdministration().declareQueue(queue);
         LOG.info("Declared queue {}", this.queue.getName());
         
