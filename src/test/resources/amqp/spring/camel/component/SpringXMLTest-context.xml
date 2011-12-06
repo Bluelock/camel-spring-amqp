@@ -65,6 +65,6 @@
     
     <bean id="jsonMessageConverter" class="amqp.spring.converter.XStreamConverter"/>
     <rabbit:connection-factory id="connectionFactory"/>
-    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="jsonMessageConverter"/>
+    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="jsonMessageConverter" reply-timeout="60000"/>
     <rabbit:admin connection-factory="connectionFactory"/>
 </beans>
