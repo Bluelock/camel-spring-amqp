@@ -65,14 +65,6 @@
         <org.springframework.version>3.0.6.RELEASE</org.springframework.version>
     </properties>
 
-    <distributionManagement>
-        <repository>
-            <id>Apache HTTP</id>
-            <name>Local file system</name>
-            <url>file:///var/www/html/maven</url>
-        </repository>
-    </distributionManagement>
-
     <dependencies>
         <!-- Marshalling -->
         <dependency>
