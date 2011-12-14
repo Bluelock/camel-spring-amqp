@@ -42,7 +42,7 @@ public class SpringAMQPMessage extends DefaultMessage {
 
     public static SpringAMQPMessage fromAMQPMessage(MessageConverter msgConverter, org.springframework.amqp.core.Message amqpMessage) {
         if(amqpMessage == null) {
-            LOG.warn("Received NULL AMQP Message, returning null");
+            LOG.debug("Received NULL AMQP Message, returning null");
             return null;
         }
         
