@@ -97,7 +97,7 @@ You can include this component within your Maven POM as:
 	<dependency>
 	    <groupId>com.bluelock</groupId>
 	    <artifactId>camel-spring-amqp</artifactId>
-	    <version>0.1-SNAPSHOT</version>
+	    <version>1.0-SNAPSHOT</version>
 	</dependency>
 
 The Sonatype OSS snapshot repository is located at https://oss.sonatype.org/content/repositories/snapshots/
