@@ -1,5 +1,5 @@
-Mozilla Public License Version 2.0, Release Candidate 2
-=======================================================
+Mozilla Public License Release Candidate 3
+==========================================
 
 1. Definitions
 --------------
@@ -36,7 +36,7 @@ Mozilla Public License Version 2.0, Release Candidate 2
 
 1.7. "Larger Work"
     means a work that combines Covered Software with code in a separate
-    file or files not governed by the terms of this License.
+    file, or files, not governed by the terms of this License.
 
 1.8. "License"
     means this document.
@@ -65,9 +65,10 @@ Mozilla Public License Version 2.0, Release Candidate 2
     Contributor Version.
 
 1.12. "Secondary License"
-    means either the GNU General Public License, Version 2.0 or later,
-    the GNU Lesser General Public License, Version 2.1 or later, or the
-    GNU Affero General Public License, Version 3.0 or later.
+    means either the GNU General Public License, Version 2.0, the GNU
+    Lesser General Public License, Version 2.1, the GNU Affero General
+    Public License, Version 3.0, or any later versions of those
+    licenses.
 
 1.13. "Source Code Form"
     means the form of the work preferred for making modifications.
@@ -186,12 +187,13 @@ If You distribute Covered Software in Executable Form then:
 You may create and distribute a Larger Work under terms of Your choice,
 provided that You also comply with the requirements of this License for
 the Covered Software. If the Larger Work is a combination of Covered
-Software with a work governed by a Secondary License, and the Covered
-Software is not Incompatible With Secondary Licenses, this License
-permits You to additionally distribute such Covered Software under the
-terms of that Secondary License, so that the recipient of the Larger
-Work may, at their option, further distribute the Covered Software under
-the terms of either this License or that Secondary License.
+Software with a work governed by one or more Secondary Licenses, and the
+Covered Software is not Incompatible With Secondary Licenses, this
+License permits You to additionally distribute such Covered Software
+under the terms of such Secondary License(s), so that the recipient of
+the Larger Work may, at their option, further distribute the Covered
+Software under the terms of either this License or such Secondary
+License(s).
 
 3.4. Notices
 
@@ -259,7 +261,8 @@ prior to termination shall survive termination.
 ************************************************************************
 *                                                                      *
 *  6. Disclaimer of Warranty                                           *
-*  -------------------------                                           *
+*  -------------------------
+*                                                                  *
 *                                                                      *
 *  Covered Software is provided under this License on an "as is"       *
 *  basis, without warranty of any kind, either expressed, implied, or  *
