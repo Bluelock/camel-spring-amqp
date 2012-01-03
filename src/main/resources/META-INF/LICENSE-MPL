@@ -1,5 +1,5 @@
-Mozilla Public License Release Candidate 3
-==========================================
+Mozilla Public License Version 2.0
+==================================
 
 1. Definitions
 --------------
@@ -35,8 +35,8 @@ Mozilla Public License Release Candidate 3
     means any form of the work other than Source Code Form.
 
 1.7. "Larger Work"
-    means a work that combines Covered Software with code in a separate
-    file, or files, not governed by the terms of this License.
+    means a work that combines Covered Software with other material, in 
+    a separate file or files, that is not Covered Software.
 
 1.8. "License"
     means this document.
@@ -260,9 +260,8 @@ prior to termination shall survive termination.
 
 ************************************************************************
 *                                                                      *
-*  6. Disclaimer of Warranty                                           *
-*  -------------------------
-*                                                                  *
+*  6. Disclaimer of Warranty                                           * 
+*  -------------------------                                           *                                                                  *
 *                                                                      *
 *  Covered Software is provided under this License on an "as is"       *
 *  basis, without warranty of any kind, either expressed, implied, or  *
