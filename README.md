@@ -105,14 +105,13 @@ The Sonatype OSS snapshot repository is located at https://oss.sonatype.org/cont
 ## Limitations
 
  - Transactions are currently not supported
-
- - TTLs have not yet been implemented
-
  - Lifecycle events (e.g. stop, shutdown) need to be refined
-
  - Unit tests require a running AMQP broker. I may end up creating a VM local Qpid instance as an AMQP broker...
 
- - The component is currently undergoing integration testing but has not yet been tested in a production environment
+## To-Do
+
+ - Migrate to Camel's asyc component framework
+ - Validate with other AMQP brokers (such as Qpid)
 
 ## License
 
