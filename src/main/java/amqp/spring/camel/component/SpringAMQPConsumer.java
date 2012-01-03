@@ -15,6 +15,8 @@
  */
 package amqp.spring.camel.component;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -38,6 +40,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.StatefulRetryOperationsInterceptorFactoryBean;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.retry.MessageKeyGenerator;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
@@ -179,8 +182,11 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         public final Advice[] getAdviceChain() {
             RetryTemplate retryRule = new RetryTemplate();
             retryRule.setRetryPolicy(new NeverRetryPolicy());
+            
             StatefulRetryOperationsInterceptorFactoryBean retryOperation = new StatefulRetryOperationsInterceptorFactoryBean();
             retryOperation.setRetryOperations(retryRule);
+            retryOperation.setMessageKeyGeneretor(new DefaultKeyGenerator());
+            
             return new Advice[] { retryOperation.getObject() };
         }
 
@@ -206,6 +212,22 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                 exchange.setOut(replyMessage); //Swap out the outbound message
                 
                 endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), replyMessage.toAMQPMessage(msgConverter));
+            }
+        }
+    }
+
+    //If the producer does not generate an ID, let's do so now
+    static class DefaultKeyGenerator implements MessageKeyGenerator {
+        public static final String ALGORITHM = "MD5";
+        
+        @Override
+        public Object getKey(Message message) {
+            try {
+                MessageDigest digest = MessageDigest.getInstance(ALGORITHM);
+                digest.update(message.getBody());
+                return String.valueOf(digest.digest());
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
             }
         }
     }
