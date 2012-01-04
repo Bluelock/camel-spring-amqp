@@ -64,7 +64,18 @@
     <bean id="testThree" class="amqp.spring.camel.component.SpringXMLTest"/>
     
     <bean id="jsonMessageConverter" class="amqp.spring.converter.XStreamConverter"/>
+    <bean id="textMessageConverter" class="amqp.spring.converter.StringConverter"/>
+    <bean id="messageConverter" class="amqp.spring.converter.ContentTypeConverterFactory">
+        <property name="converters">
+            <map>
+                <entry key="application/json" value-ref="jsonMessageConverter"/>
+                <entry key="application/xml" value-ref="textMessageConverter"/>
+            </map>
+        </property>
+        <property name="fallbackConverter" ref="textMessageConverter"/>
+    </bean>
+    
     <rabbit:connection-factory id="connectionFactory"/>
-    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="jsonMessageConverter" reply-timeout="60000"/>
+    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="messageConverter" reply-timeout="60000"/>
     <rabbit:admin connection-factory="connectionFactory"/>
 </beans>

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * 
- * Software distributed under the License is distributed on an \"AS IS\"
+ * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
  * License for the specific language governing rights and limitations
  * under the License.
@@ -22,7 +22,7 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.support.converter.MessageConverter;
 
-public class XStreamConverterTest {
+public class StringConverterTest {
     
     @Test
     public void testConversion() throws Exception {
@@ -31,16 +31,15 @@ public class XStreamConverterTest {
         
         MessageProperties messageProperties = new MessageProperties();
         
-        MessageConverter converter = new XStreamConverter();
+        MessageConverter converter = new StringConverter();
         Message amqpMessage = converter.toMessage(testObject, messageProperties);
-        Assert.assertEquals("{\"amqp.spring.converter.XStreamConverterTest_-TestObject\":{\"value\":\"TESTING\"}}", new String(amqpMessage.getBody()));
-
         Object newObject = converter.fromMessage(amqpMessage);
-        Assert.assertEquals(testObject, newObject);
+        
+        Assert.assertEquals("TESTING", newObject);
     }
     
     private static class TestObject implements Serializable {
-        private static final long serialVersionUID = 5137673667799859817L;
+        private static final long serialVersionUID = 8035548300959603643L;
         protected String value;
         public String getValue() { return value; }
         public void setValue(String value) { this.value = value; }
@@ -63,8 +62,13 @@ public class XStreamConverterTest {
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 29 * hash + (this.value != null ? this.value.hashCode() : 0);
+            hash = 11 * hash + (this.value != null ? this.value.hashCode() : 0);
             return hash;
+        }
+        
+        @Override
+        public String toString() {
+            return this.value;
         }
     }
 }

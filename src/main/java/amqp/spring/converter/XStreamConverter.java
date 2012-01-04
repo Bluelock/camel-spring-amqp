@@ -35,6 +35,9 @@ import org.springframework.amqp.support.converter.ClassMapper;
 import org.springframework.amqp.support.converter.DefaultClassMapper;
 import org.springframework.amqp.support.converter.MessageConversionException;
 
+/**
+ * Marshal (and un-marshal) a message into JSON using XStream
+ */
 public class XStreamConverter extends AbstractMessageConverter {
     private static transient final Logger LOG = LoggerFactory.getLogger(XStreamConverter.class);
     
