@@ -15,8 +15,6 @@
  */
 package amqp.spring.camel.component;
 
-import java.util.ArrayList;
-import java.util.StringTokenizer;
 import org.apache.camel.Consumer;
 import org.apache.camel.Processor;
 import org.apache.camel.Producer;
@@ -68,20 +66,20 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         this.amqpAdministration = admin;
         this.amqpTemplate = template;
         
-        ArrayList<String> tokens = new ArrayList<String>();
-        StringTokenizer uriTokenizer = new StringTokenizer(remaining, ":");
-        while(uriTokenizer.hasMoreTokens())
-            tokens.add(uriTokenizer.nextToken());
+        String[] tokens = remaining.split(":");
+        for (String string : tokens) {
+			System.out.println(string);
+		}
         
         //Per spec expected default is empty string
-        this.exchangeName = tokens.isEmpty() || tokens.get(0) == null ? "" : tokens.get(0); 
+        this.exchangeName = tokens.length == 0 || tokens[0] == null ? "" : tokens[0]; 
         //Consumers must specify exchange, queue and routing key in that order
-        if(tokens.size() > 2) { 
-            this.queueName = tokens.get(1);
-            this.routingKey = tokens.get(2);
+        if(tokens.length > 2) { 
+            this.queueName = tokens[1];
+            this.routingKey = tokens[2];
         //We have only 2 parameters. Is this a routing key or a queue? We don't know yet.
-        } else if(tokens.size() == 2) {
-            this.tempQueueOrKey = tokens.get(1);
+        } else if(tokens.length == 2) {
+            this.tempQueueOrKey = tokens[1];
         //We only have the exchange name - that's it. This must be a fanout producer.
         } else {
             this.exchangeType = "fanout";
