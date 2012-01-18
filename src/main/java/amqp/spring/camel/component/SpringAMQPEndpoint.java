@@ -31,6 +31,8 @@ import org.springframework.amqp.core.TopicExchange;
 public class SpringAMQPEndpoint extends DefaultEndpoint {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPEndpoint.class);
     
+    private static final String DEFAULT_EXCHANGE_NAME = "";
+    
     protected AmqpAdmin amqpAdministration;
     protected AmqpTemplate amqpTemplate;
             
@@ -154,6 +156,10 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     public void setExchangeName(String exchangeName) {
         this.exchangeName = exchangeName;
+    }
+    
+    public boolean isUsingDefaultExchange() {
+        return DEFAULT_EXCHANGE_NAME.equals(this.exchangeName);
     }
 
     public String getQueueName() {

@@ -106,6 +106,16 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     }
     
     @Test
+    public void testDefaultExchange() throws Exception {
+        MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.e", MockEndpoint.class);
+        mockEndpointOne.expectedMessageCount(1);
+        
+        context().createProducerTemplate().sendBody("spring-amqp::test.e", "testBody");
+        
+        mockEndpointOne.assertIsSatisfied();
+    }
+    
+    @Test
     public void sendMessageTTL() throws Exception {
         MockEndpoint mockEndpoint = context().getEndpoint("mock:test.a", MockEndpoint.class);
         mockEndpoint.expectedMessageCount(1);
@@ -140,6 +150,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
                 from("spring-amqp:headerAndExchange:q2:cheese=asiago&fromage=cheddar?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.b");
                 from("spring-amqp:headerAndExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
                 from("spring-amqp:headerOrExchange:q4:cheese=white|fromage=bleu?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.d");
+                from("spring-amqp::test.e:test.e?durable=false&autodelete=true&exclusive=false").to("mock:test.e");
             }
         };
     }

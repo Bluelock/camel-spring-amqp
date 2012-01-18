@@ -43,6 +43,24 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	assertEquals("", endpoint.exchangeName);
     	assertEquals("routingKey1", ReflectionTestUtils.getField(endpoint, "tempQueueOrKey"));
     }
+    
+    @Test
+    public void testIsUsingDefaultExchangeTrue() {
+        String remaining = ":routingKey1";
+    	
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	
+    	assertTrue(endpoint.isUsingDefaultExchange());
+    }
+    
+    @Test
+    public void testIsNotUsingDefaultExchangeFalse() {
+        String remaining = "exchange1:routingKey1";
+    	
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	
+    	assertFalse(endpoint.isUsingDefaultExchange());
+    }    
         
     @Override
     protected CamelContext createCamelContext() throws Exception {
