@@ -58,9 +58,6 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         this.amqpTemplate = template;
         
         String[] tokens = remaining.split(":");
-        for (String string : tokens) {
-			System.out.println(string);
-		}
         
         //Per spec expected default is empty string
         this.exchangeName = tokens.length == 0 || tokens[0] == null ? "" : tokens[0]; 
