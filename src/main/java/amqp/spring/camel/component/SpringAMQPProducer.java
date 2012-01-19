@@ -42,7 +42,7 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
             if(exchange.getException() == null)
                 exchange.setException(e);
         } finally {
-            callback.done(true);
+            callback.done(false);
         }
         
         return false;
