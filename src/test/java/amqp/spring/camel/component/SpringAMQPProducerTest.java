@@ -67,6 +67,11 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
         context().createProducerTemplate().sendBody("direct:test.z", null);
     }
     
+    @Test
+    public void sendUsingDefaultExchange() throws Exception {
+        context().createProducerTemplate().sendBody("direct:test.y", null);
+    }
+    
     @Override
     protected CamelContext createCamelContext() throws Exception {
         CachingConnectionFactory factory = new CachingConnectionFactory();
@@ -84,6 +89,7 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
         return new RouteBuilder() {
             @Override
             public void configure() throws Exception {
+            	from("direct:test.y").to("spring-amqp::test.y?durable=false&autodelete=true&exclusive=false");
                 from("direct:test.z").to("spring-amqp:myExchange:test.z?durable=false&autodelete=true&exclusive=false");
                 from("direct:test.x").to("spring-amqp:myExchange:test.x?durable=false&autodelete=true&exclusive=false");
                 from("direct:test.y").to("spring-amqp:myExchange:test.y?durable=false&autodelete=true&exclusive=false");

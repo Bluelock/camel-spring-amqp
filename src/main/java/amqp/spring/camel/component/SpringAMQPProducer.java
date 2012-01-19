@@ -61,8 +61,12 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         super.start();
         
         this.exchange = this.endpoint.createAMQPExchange();
-        this.endpoint.amqpAdministration.declareExchange(this.exchange);
-        LOG.info("Declared exchange {}", this.exchange.getName());
+        if (this.endpoint.isUsingDefaultExchange()) {
+            LOG.info("Using default exchange");
+        } else {
+            this.endpoint.amqpAdministration.declareExchange(this.exchange);
+            LOG.info("Declared exchange {}", this.exchange.getName());
+        }
     }
 
     @Override

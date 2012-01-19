@@ -56,8 +56,12 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         super.start();
         
         org.springframework.amqp.core.Exchange exchange = this.endpoint.createAMQPExchange();
-        this.endpoint.amqpAdministration.declareExchange(exchange);
-        LOG.info("Declared exchange {}", exchange.getName());
+        if (this.endpoint.isUsingDefaultExchange()) {
+            LOG.info("Using default exchange");
+        } else {
+        	this.endpoint.amqpAdministration.declareExchange(exchange);
+        	LOG.info("Declared exchange {}", exchange.getName());
+        }
 
         //Determine queue arguments, including vendor extensions
         Map<String, Object> queueArguments = new HashMap<String, Object>();
@@ -70,7 +74,7 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         LOG.info("Declared queue {}", this.queue.getName());
         
         //Is this a header exchange? Bind the key/value pair(s)
-        if(exchange instanceof HeadersExchange) { 
+        if(exchange instanceof HeadersExchange) {
             if(this.endpoint.routingKey == null)
                 throw new IllegalStateException("Specified a header exchange without a key/value match");
             
@@ -93,7 +97,9 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             this.binding = BindingBuilder.bind(this.queue).to(exchange).with(this.endpoint.routingKey).noargs();
         }
         
-        if(this.binding != null) {
+        if(this.endpoint.isUsingDefaultExchange()) {
+            LOG.info("Default exchange is implicitly bound to every queue, with a routing key equal to the queue name");
+        } else if (this.binding != null) {
             this.endpoint.getAmqpAdministration().declareBinding(binding);
             LOG.info("Declared binding {}", this.binding.getRoutingKey());
         }
