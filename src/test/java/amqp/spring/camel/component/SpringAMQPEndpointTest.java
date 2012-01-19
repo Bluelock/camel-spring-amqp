@@ -7,6 +7,7 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.camel.Endpoint;
 import org.apache.camel.test.junit4.CamelTestSupport;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -17,10 +18,10 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     @Test
     public void testCreateContext() throws Exception {
         Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
-        assertNotNull(component);
+        Assert.assertNotNull(component);
         
         Endpoint endpoint = component.createEndpoint("spring-amqp:test.a");
-        assertNotNull(endpoint);
+        Assert.assertNotNull(endpoint);
     }
     
     @Test
@@ -29,9 +30,9 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
     	
-    	assertEquals("", endpoint.exchangeName);
-    	assertEquals("queue1", endpoint.queueName);
-    	assertEquals("routingKey1", endpoint.routingKey);
+    	Assert.assertEquals("", endpoint.exchangeName);
+    	Assert.assertEquals("queue1", endpoint.queueName);
+    	Assert.assertEquals("routingKey1", endpoint.routingKey);
     }
     
     @Test
@@ -40,8 +41,8 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
     	
-    	assertEquals("", endpoint.exchangeName);
-    	assertEquals("routingKey1", ReflectionTestUtils.getField(endpoint, "tempQueueOrKey"));
+    	Assert.assertEquals("", endpoint.exchangeName);
+    	Assert.assertEquals("routingKey1", ReflectionTestUtils.getField(endpoint, "tempQueueOrKey"));
     }
     
     @Test
@@ -50,7 +51,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
     	
-    	assertTrue(endpoint.isUsingDefaultExchange());
+    	Assert.assertTrue(endpoint.isUsingDefaultExchange());
     }
     
     @Test
@@ -59,7 +60,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
     	
-    	assertFalse(endpoint.isUsingDefaultExchange());
+    	Assert.assertFalse(endpoint.isUsingDefaultExchange());
     }    
         
     @Override
