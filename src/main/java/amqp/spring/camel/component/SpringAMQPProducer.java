@@ -4,8 +4,10 @@
 
 package amqp.spring.camel.component;
 
+import java.util.concurrent.RejectedExecutionException;
+import org.apache.camel.AsyncCallback;
 import org.apache.camel.Exchange;
-import org.apache.camel.impl.DefaultProducer;
+import org.apache.camel.impl.DefaultAsyncProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
@@ -13,7 +15,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 
-public class SpringAMQPProducer extends DefaultProducer {
+public class SpringAMQPProducer extends DefaultAsyncProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
     
     protected SpringAMQPEndpoint endpoint;
@@ -24,8 +26,35 @@ public class SpringAMQPProducer extends DefaultProducer {
         this.endpoint = endpoint;
     }
 
+
+    @Override
+    public boolean process(Exchange exchange, AsyncCallback callback) {
+        if(! isRunAllowed()) {
+            if(exchange.getException() == null)
+                exchange.setException(new RejectedExecutionException("SpringAMQPProducer not started yet!"));
+            callback.done(true);
+            return true;
+        }
+        
+        try {
+            process(exchange);
+        } catch(Exception e) {
+            if(exchange.getException() == null)
+                exchange.setException(e);
+        } finally {
+            callback.done(true);
+        }
+        
+        return false;
+    }
+    
     @Override
     public void process(Exchange exchange) throws Exception {
+        if(! isRunAllowed()) {
+            if(exchange.getException() == null)
+                exchange.setException(new RejectedExecutionException("SpringAMQPProducer not started yet!"));
+        }
+        
         org.apache.camel.Message message = exchange.getIn();
         SpringAMQPMessage inMessage = new SpringAMQPMessage(message);
         exchange.setIn(inMessage); //Swap out the old message format
