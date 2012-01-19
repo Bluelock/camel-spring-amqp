@@ -44,7 +44,7 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
     
     @Test
     public void sendAsyncCallbackMessage() throws Exception {
-        context().createProducerTemplate().asyncCallbackSendBody("direct:test.y", "HELLO WORLD", new Synchronization() {
+        context().createProducerTemplate().asyncCallbackSendBody("direct:test.w", "HELLO WORLD", new Synchronization() {
             @Override
             public void onComplete(Exchange exchange) {
                 Assert.assertNull(exchange.getException());
@@ -92,7 +92,7 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
             	from("direct:test.y").to("spring-amqp::test.y?durable=false&autodelete=true&exclusive=false");
                 from("direct:test.z").to("spring-amqp:myExchange:test.z?durable=false&autodelete=true&exclusive=false");
                 from("direct:test.x").to("spring-amqp:myExchange:test.x?durable=false&autodelete=true&exclusive=false");
-                from("direct:test.y").to("spring-amqp:myExchange:test.y?durable=false&autodelete=true&exclusive=false");
+                from("direct:test.w").to("spring-amqp:myExchange:test.w?durable=false&autodelete=true&exclusive=false");
             }
         };
     }
