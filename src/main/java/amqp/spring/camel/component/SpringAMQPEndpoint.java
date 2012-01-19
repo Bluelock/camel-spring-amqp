@@ -47,6 +47,9 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     int concurrentConsumers = 1;
     int prefetchCount = 1;
     Integer timeToLive = null;
+    long idleThreadKeepAliveMillis = 60000;
+    int threadPoolIdleSize = 4;
+    int threadPoolMaxSize = 20;
     
     //The second and third parameters to the URI can be interchangable based on the context.
     //Place them here until we determine if we're a consumer or producer.
@@ -212,6 +215,34 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     public void setTimeToLive(Integer timeToLive) {
         this.timeToLive = timeToLive;
+    }
+
+    public long getIdleThreadKeepAliveMillis() {
+        return idleThreadKeepAliveMillis;
+    }
+
+    public void setIdleThreadKeepAliveMillis(long idleThreadKeepAliveMillis) {
+        this.idleThreadKeepAliveMillis = idleThreadKeepAliveMillis;
+    }
+
+    public int getThreadPoolIdleSize() {
+        return threadPoolIdleSize;
+    }
+
+    public void setThreadPoolIdleSize(int threadPoolIdleSize) {
+        if(threadPoolIdleSize == 0)
+            throw new IllegalArgumentException("Cannot set thread pool size to 0!");
+        this.threadPoolIdleSize = threadPoolIdleSize;
+    }
+
+    public int getThreadPoolMaxSize() {
+        return threadPoolMaxSize;
+    }
+
+    public void setThreadPoolMaxSize(int threadPoolMaxSize) {
+        if(threadPoolIdleSize == 0)
+            throw new IllegalArgumentException("Cannot set thread pool size to 0!");
+        this.threadPoolMaxSize = threadPoolMaxSize;
     }
 
     @Override

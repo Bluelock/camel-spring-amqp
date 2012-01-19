@@ -108,7 +108,6 @@ You can include this component within your Maven POM as:
 
 ## To-Do
 
- - Migrate to Camel's asyc component framework
  - Validate with other AMQP brokers (such as Qpid)
 
 ## License

@@ -4,7 +4,7 @@
 
 package amqp.spring.camel.component;
 
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 import org.apache.camel.AsyncCallback;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultAsyncProducer;
@@ -20,12 +20,16 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     
     protected SpringAMQPEndpoint endpoint;
     private org.springframework.amqp.core.Exchange exchange;
+    private ExecutorService threadPool;
     
     public SpringAMQPProducer(SpringAMQPEndpoint endpoint) {
         super(endpoint);
         this.endpoint = endpoint;
+        
+        BlockingQueue threadQueue = new LinkedBlockingQueue(endpoint.getThreadPoolMaxSize());
+        this.threadPool = new ThreadPoolExecutor(endpoint.getThreadPoolIdleSize(), endpoint.getThreadPoolMaxSize(), 
+                endpoint.getIdleThreadKeepAliveMillis(), TimeUnit.MILLISECONDS, threadQueue);
     }
-
 
     @Override
     public boolean process(Exchange exchange, AsyncCallback callback) {
@@ -36,15 +40,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
             return true;
         }
         
-        try {
-            process(exchange);
-        } catch(Exception e) {
-            if(exchange.getException() == null)
-                exchange.setException(e);
-        } finally {
-            callback.done(false);
-        }
-        
+        assert this.threadPool != null;
+        this.threadPool.execute(new AMQPProducerTask(exchange, callback));
         return false;
     }
     
@@ -55,28 +52,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                 exchange.setException(new RejectedExecutionException("SpringAMQPProducer not started yet!"));
         }
         
-        org.apache.camel.Message message = exchange.getIn();
-        SpringAMQPMessage inMessage = new SpringAMQPMessage(message);
-        exchange.setIn(inMessage); //Swap out the old message format
-        
-        MessageConverter msgConverter;
-        if(this.endpoint.getAmqpTemplate() instanceof RabbitTemplate) {
-            RabbitTemplate rabbitTemplate = (RabbitTemplate) this.endpoint.getAmqpTemplate();
-            msgConverter = rabbitTemplate.getMessageConverter();
-        } else {
-            LOG.warn("Cannot find RabbitMQ AMQP Template, falling back to simple message converter");
-            msgConverter = new SimpleMessageConverter();
-        }
-        
-        if(exchange.getPattern().isOutCapable()) {
-            LOG.debug("Synchronous send and request for exchange {}", exchange.getExchangeId());
-            Message amqpResponse = this.endpoint.getAmqpTemplate().sendAndReceive(this.endpoint.exchangeName, this.endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
-            SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
-            exchange.setOut(camelResponse);
-        } else {
-            LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
-            this.endpoint.getAmqpTemplate().send(this.endpoint.exchangeName, this.endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
-        }
+        //This is an intentional synchronous invocation of run(), don't mock me
+        new AMQPProducerTask(exchange).run();
     }
 
     @Override
@@ -86,5 +63,62 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         this.exchange = this.endpoint.createAMQPExchange();
         this.endpoint.amqpAdministration.declareExchange(this.exchange);
         LOG.info("Declared exchange {}", this.exchange.getName());
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        super.shutdown();
+        
+        this.threadPool.shutdown();
+    }
+    
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        
+        this.threadPool.shutdownNow();
+    }
+    
+    private class AMQPProducerTask implements Runnable {
+        Exchange exchange;
+        AsyncCallback callback;
+        
+        public AMQPProducerTask(Exchange exchange) {
+            this(exchange, null);
+        }
+        
+        public AMQPProducerTask(Exchange exchange, AsyncCallback callback) {
+            this.exchange = exchange;
+            this.callback = callback;
+        }
+        
+        @Override
+        public void run() {
+            org.apache.camel.Message message = exchange.getIn();
+            SpringAMQPMessage inMessage = new SpringAMQPMessage(message);
+            exchange.setIn(inMessage); //Swap out the old message format
+
+            MessageConverter msgConverter;
+            if(endpoint.getAmqpTemplate() instanceof RabbitTemplate) {
+                RabbitTemplate rabbitTemplate = (RabbitTemplate) endpoint.getAmqpTemplate();
+                msgConverter = rabbitTemplate.getMessageConverter();
+            } else {
+                LOG.warn("Cannot find RabbitMQ AMQP Template, falling back to simple message converter");
+                msgConverter = new SimpleMessageConverter();
+            }
+
+            if(exchange.getPattern().isOutCapable()) {
+                LOG.debug("Synchronous send and request for exchange {}", exchange.getExchangeId());
+                Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(endpoint.exchangeName, endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
+                SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
+                exchange.setOut(camelResponse);
+            } else {
+                LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
+                endpoint.getAmqpTemplate().send(endpoint.exchangeName, endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
+            }
+            
+            if(callback != null) 
+                callback.done(false);
+        }
     }
 }

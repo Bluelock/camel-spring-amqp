@@ -66,6 +66,19 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     }
     
     @Test
+    public void sendAsyncMessage() throws Exception {
+        MockEndpoint mockEndpoint = context().getEndpoint("mock:test.b", MockEndpoint.class);
+        mockEndpoint.expectedMessageCount(1);
+        context().createProducerTemplate().asyncRequestBodyAndHeader("spring-amqp:directExchange:test.b?durable=false&autodelete=true&exclusive=false", "sendMessage", "HeaderKey", "HeaderValue");
+        
+        mockEndpoint.assertIsSatisfied();
+        Message inMessage = mockEndpoint.getExchanges().get(0).getIn();
+        Assert.assertEquals("sendMessage", inMessage.getBody(String.class));
+        Assert.assertEquals("HeaderValue", inMessage.getHeader("HeaderKey"));
+        Assert.assertNotNull(inMessage.getMessageId());
+    }
+    
+    @Test
     public void testHeaderAndExchange() throws Exception {
         MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.b", MockEndpoint.class);
         mockEndpointOne.expectedMessageCount(1);
@@ -137,6 +150,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
             @Override
             public void configure() throws Exception {
                 from("spring-amqp:directExchange:q1:test.a?durable=false&autodelete=true&exclusive=false").to("mock:test.a");
+                from("spring-amqp:directExchange:q5:test.b?durable=false&autodelete=true&exclusive=false").to("mock:test.b");
                 from("spring-amqp:headerAndExchange:q2:cheese=asiago&fromage=cheddar?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.b");
                 from("spring-amqp:headerAndExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
                 from("spring-amqp:headerOrExchange:q4:cheese=white|fromage=bleu?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.d");
