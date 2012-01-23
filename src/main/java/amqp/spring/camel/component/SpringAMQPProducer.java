@@ -25,10 +25,6 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     public SpringAMQPProducer(SpringAMQPEndpoint endpoint) {
         super(endpoint);
         this.endpoint = endpoint;
-        
-        BlockingQueue threadQueue = new LinkedBlockingQueue(endpoint.getThreadPoolMaxSize());
-        this.threadPool = new ThreadPoolExecutor(endpoint.getThreadPoolIdleSize(), endpoint.getThreadPoolMaxSize(), 
-                endpoint.getIdleThreadKeepAliveMillis(), TimeUnit.MILLISECONDS, threadQueue);
     }
 
     @Override
@@ -67,6 +63,9 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
             this.endpoint.amqpAdministration.declareExchange(this.exchange);
             LOG.info("Declared exchange {}", this.exchange.getName());
         }
+
+        //Initialize execution pool
+        this.threadPool = new ScheduledThreadPoolExecutor(endpoint.getThreadPoolMaxSize());
     }
 
     @Override
