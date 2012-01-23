@@ -89,6 +89,31 @@ JSON marshalling using the XStream libraries. If you would rather use the Jackso
 conversion method) provided by the Spring AMQP framework, you can swap out the appropriate message converter class 
 in the above example.
 
+## Advanced Message Conversion
+
+You may wish to use JSON marshalling for the majority of your inter-process communication, but may have
+the need to do XML marshalling for REST API calls or the like. If you wish you can specify
+multiple types of message conversion based on the content type of the message. For example, we may have
+messages marshalled to JSON by default but want content types of application/text to just
+be printed out as strings. Within the Spring XML DSL you may define:
+
+	<bean id="jsonMessageConverter" class="amqp.spring.converter.XStreamConverter"/>
+	<bean id="textMessageConverter" class="amqp.spring.converter.StringConverter"/>
+	<bean id="messageConverter" class="amqp.spring.converter.ContentTypeConverterFactory">
+	    <property name="converters">
+	        <map>
+	            <entry key="application/json" value-ref="jsonMessageConverter"/>
+	            <entry key="application/xml" value-ref="textMessageConverter"/>
+	        </map>
+	    </property>
+	    <property name="fallbackConverter" ref="jsonMessageConverter"/>
+	</bean>
+
+This would allow messages with a "Content-Type" of application/json to be marshalled
+with the XStream converter, while messages with a content type of application/xml
+will be marshalled into a simple character string. If no content type is specified,
+the XStream JSON message converter will be used.
+
 ## Downloads and Maven Repository
 
 Release builds of the Camel Spring AMQP Component are hosted within [the Sonatype repository](https://oss.sonatype.org/index.html). 
