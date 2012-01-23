@@ -44,7 +44,7 @@
         </route>
         
         <route>
-            <from uri="spring-amqp:testRequest:testReply:test.n?durable=false&amp;autodelete=true&amp;exclusive=false&amp;threadPoolMaxSize=2"/>
+            <from uri="spring-amqp:testRequest:testReply:test.n?durable=false&amp;autodelete=true&amp;exclusive=false"/>
             <to uri="bean:testThree"/>
         </route>
     </camelContext>

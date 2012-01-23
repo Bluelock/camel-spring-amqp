@@ -17,9 +17,7 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.Handler;
 import org.apache.camel.ProducerTemplate;
-import org.apache.camel.spi.Synchronization;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -39,10 +37,6 @@ public class ContrivedLoadTest {
     @Resource
     protected CamelContext camelContext;
     
-    @Before
-    public void resetEndpoints() throws Exception {
-    }
-    
     @Test
     public void testSynchronous() throws Exception {
         final int messageCount = 1000;
@@ -55,13 +49,19 @@ public class ContrivedLoadTest {
             futures.add(executorService.submit(new SynchronousRequestor(this.template)));
         LOG.info("Time to submit synchronous messages: {}", (System.currentTimeMillis() - startTime) / 1000.0f);
 
+        startTime = System.currentTimeMillis();
         for(Future<String> future : futures) {
             String response = future.get();
             if("RESPONSE".equals(response)) ++received;
         }
-        LOG.info("Time to receive synchronous messages: {}", (System.currentTimeMillis() - startTime) / 1000.0f);
+        float elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0f;
+        int maxPoolSize = this.camelContext.getExecutorServiceStrategy().getDefaultThreadPoolProfile().getMaxPoolSize();
+        LOG.info("Time to receive synchronous messages: {}", elapsedTime);
         
         Assert.assertEquals(messageCount, received);
+        //Assuming 1 second delay per message, elapsed time shouldn't exceed the number of messages sent 
+        //dividied by the number of messages that can be simultaneously consumed.
+        Assert.assertTrue(elapsedTime < (messageCount / (double) maxPoolSize));
     }
     
     @Test
@@ -75,13 +75,19 @@ public class ContrivedLoadTest {
             futures.add(this.template.asyncRequestBody("direct:sync", "HELLO WORLD", String.class));
         LOG.info("Time to submit asynchronous messages: {}", (System.currentTimeMillis() - startTime) / 1000.0f);
 
+        startTime = System.currentTimeMillis();
         for(Future<String> future : futures) {
             String response = future.get();
             if("RESPONSE".equals(response)) ++received;
         }
-        LOG.info("Time to receive asynchronous messages: {}", (System.currentTimeMillis() - startTime) / 1000.0f);
+        float elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0f;
+        int maxPoolSize = this.camelContext.getExecutorServiceStrategy().getDefaultThreadPoolProfile().getMaxPoolSize();
+        LOG.info("Time to receive asynchronous messages: {}", elapsedTime);
         
         Assert.assertEquals(messageCount, received);
+        //Assuming 1 second delay per message, elapsed time shouldn't exceed the number of messages sent 
+        //dividied by the number of messages that can be simultaneously consumed.
+        Assert.assertTrue(elapsedTime < (messageCount / (double) maxPoolSize));
     }
     
     @Handler

@@ -7,9 +7,11 @@ package amqp.spring.camel.component;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.camel.AsyncCallback;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultAsyncProducer;
+import org.apache.camel.spi.ExecutorServiceStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
@@ -67,7 +69,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         }
 
         //Initialize execution pool
-        this.threadPool = new ScheduledThreadPoolExecutor(endpoint.getThreadPoolMaxSize());
+        //TODO In Camel 2.9+ this becomes ExecutorServiceManager
+        this.threadPool = this.endpoint.getCamelContext().getExecutorServiceStrategy().newDefaultThreadPool(this, "amqp-producer");
     }
 
     @Override
