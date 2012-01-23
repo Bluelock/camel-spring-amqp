@@ -17,6 +17,7 @@
     <camelContext id="context" xmlns="http://camel.apache.org/schema/spring">
         <jmxAgent id="agent" createConnector="false" disabled="true"/>
         <template id="template"/>
+        <threadPoolProfile id="defaultThreadPoolProfile" defaultProfile="true" poolSize="10" maxPoolSize="100" maxQueueSize="100" rejectedPolicy="CallerRuns"/>
 
         <route>
             <from uri="direct:sync"/>

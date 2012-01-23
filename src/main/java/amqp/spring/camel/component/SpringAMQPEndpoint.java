@@ -47,7 +47,6 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     int concurrentConsumers = 1;
     int prefetchCount = 1;
     Integer timeToLive = null;
-    long idleThreadKeepAliveMillis = 60000;
     int threadPoolMaxSize = 100;
     
     //The second and third parameters to the URI can be interchangable based on the context.
@@ -215,14 +214,6 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     public void setTimeToLive(Integer timeToLive) {
         this.timeToLive = timeToLive;
-    }
-
-    public long getIdleThreadKeepAliveMillis() {
-        return idleThreadKeepAliveMillis;
-    }
-
-    public void setIdleThreadKeepAliveMillis(long idleThreadKeepAliveMillis) {
-        this.idleThreadKeepAliveMillis = idleThreadKeepAliveMillis;
     }
 
     public int getThreadPoolMaxSize() {
