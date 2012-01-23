@@ -49,7 +49,6 @@ public class ContrivedLoadTest {
             futures.add(executorService.submit(new SynchronousRequestor(this.template)));
         LOG.info("Time to submit synchronous messages: {}", (System.currentTimeMillis() - startTime) / 1000.0f);
 
-        startTime = System.currentTimeMillis();
         for(Future<String> future : futures) {
             String response = future.get();
             if("RESPONSE".equals(response)) ++received;
@@ -75,7 +74,6 @@ public class ContrivedLoadTest {
             futures.add(this.template.asyncRequestBody("direct:sync", "HELLO WORLD", String.class));
         LOG.info("Time to submit asynchronous messages: {}", (System.currentTimeMillis() - startTime) / 1000.0f);
 
-        startTime = System.currentTimeMillis();
         for(Future<String> future : futures) {
             String response = future.get();
             if("RESPONSE".equals(response)) ++received;
