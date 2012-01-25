@@ -4,6 +4,7 @@
 package amqp.spring.converter;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.XStreamException;
 import com.thoughtworks.xstream.io.xml.QNameMap;
 import com.thoughtworks.xstream.io.xml.StaxReader;
 import com.thoughtworks.xstream.io.xml.StaxWriter;
@@ -72,6 +73,11 @@ public class XStreamConverter extends AbstractMessageConverter {
             String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
             LOG.error("XMLStreamException trying to marshal message of type {}", typeId, ex);
             throw new MessageConversionException("Could not marshal message of type "+typeId, ex);
+        } catch (XStreamException ex) {
+            //For some reason messages appear to be getting eaten at this stage... very nasty when you try to troubleshoot.
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("XStreamException trying to marshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not marshal message of type "+typeId, ex);
         }
     }
 
@@ -95,11 +101,16 @@ public class XStreamConverter extends AbstractMessageConverter {
 
         try {
             ByteArrayInputStream inStream = new ByteArrayInputStream(body);
-            StaxReader reader = new StaxReader(new QNameMap(), this.inputFactory.createXMLStreamReader(inStream, getEncoding()));
+            StaxReader reader = new StaxReader(new QNameMap(), this.inputFactory.createXMLStreamReader(inStream, messageEncoding));
             return this.objectMapper.unmarshal(reader);
         } catch (XMLStreamException ex) {
             String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
             LOG.error("XMLStreamException trying to unmarshal message of type {}", typeId, ex);
+            throw new MessageConversionException("Could not unmarshal message of type "+typeId, ex);
+        } catch (XStreamException ex) {
+            //For some reason messages appear to be getting eaten at this stage... very nasty when you try to troubleshoot.
+            String typeId = (String) messageProperties.getHeaders().get(DefaultClassMapper.DEFAULT_CLASSID_FIELD_NAME);
+            LOG.error("XStreamException trying to unmarshal message of type {}", typeId, ex);
             throw new MessageConversionException("Could not unmarshal message of type "+typeId, ex);
         }
     }
