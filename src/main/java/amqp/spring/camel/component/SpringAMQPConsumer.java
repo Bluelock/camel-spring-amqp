@@ -52,8 +52,8 @@ public class SpringAMQPConsumer extends DefaultConsumer {
     }
 
     @Override
-    public void start() throws Exception {
-        super.start();
+    public void doStart() throws Exception {
+        super.doStart();
         
         org.springframework.amqp.core.Exchange exchange = this.endpoint.createAMQPExchange();
         if (this.endpoint.isUsingDefaultExchange()) {
@@ -108,14 +108,13 @@ public class SpringAMQPConsumer extends DefaultConsumer {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void doStop() throws Exception {
         this.messageListener.stop();
-        
-        super.stop();
+        super.doStop();
     }
-
+    
     @Override
-    public void shutdown() throws Exception {
+    public void doShutdown() throws Exception {
         this.messageListener.shutdown();
         super.shutdown();
     }

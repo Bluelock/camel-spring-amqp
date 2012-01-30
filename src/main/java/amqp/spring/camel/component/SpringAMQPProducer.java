@@ -54,8 +54,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     }
 
     @Override
-    public void start() throws Exception {
-        super.start();
+    public void doStart() throws Exception {
+        super.doStart();
         
         this.exchange = this.endpoint.createAMQPExchange();
         if (this.endpoint.isUsingDefaultExchange()) {
@@ -71,15 +71,15 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     }
 
     @Override
-    public void shutdown() throws Exception {
-        super.shutdown();
+    public void doShutdown() throws Exception {
+        super.doShutdown();
         
         this.threadPool.shutdown();
     }
     
     @Override
-    public void stop() throws Exception {
-        super.stop();
+    public void doStop() throws Exception {
+        super.doStop();
         
         this.threadPool.shutdownNow();
     }
