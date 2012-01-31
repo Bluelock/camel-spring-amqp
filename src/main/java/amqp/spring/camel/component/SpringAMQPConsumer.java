@@ -4,6 +4,7 @@
 
 package amqp.spring.camel.component;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.apache.camel.impl.DefaultConsumer;
 import org.apache.camel.impl.DefaultExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Address;
 import org.springframework.amqp.core.Binding;
@@ -57,10 +59,18 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         
         org.springframework.amqp.core.Exchange exchange = this.endpoint.createAMQPExchange();
         if (this.endpoint.isUsingDefaultExchange()) {
-            LOG.info("Using default exchange");
+            LOG.info("Using default exchange, will not declare one");
         } else {
+            try {
         	this.endpoint.amqpAdministration.declareExchange(exchange);
         	LOG.info("Declared exchange {}", exchange.getName());
+            } catch (AmqpIOException e) {
+                if(LOG.isDebugEnabled()) {
+                    LOG.warn("Could not declare exchange {}, possible re-declaration of a different type?", exchange.getName());
+                } else {
+                    LOG.warn("Could not declare exchange {}, possible re-declaration of a different type?", exchange.getName(), e);
+                }
+            }
         }
 
         //Determine queue arguments, including vendor extensions
