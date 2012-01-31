@@ -45,8 +45,8 @@ public class StringConverter extends AbstractMessageConverter {
                 body = object.toString().getBytes(this.encoding);
             }
             
-            String contentType = this.contentType == null ? DEFAULT_CONTENT_TYPE : this.contentType;
-            messageProperties.setContentType(contentType);
+            String msgContentType = this.contentType == null ? DEFAULT_CONTENT_TYPE : this.contentType;
+            messageProperties.setContentType(msgContentType);
             messageProperties.setContentEncoding(this.encoding);
             messageProperties.setContentLength(body.length);
             return new Message(body, messageProperties);
