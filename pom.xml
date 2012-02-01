@@ -51,6 +51,7 @@
         <org.springframework.amqp.version>1.0.0.RELEASE</org.springframework.amqp.version>
         <org.springframework.retry.version>1.0.0.RELEASE</org.springframework.retry.version>
         <org.springframework.version>3.0.6.RELEASE</org.springframework.version>
+        <ch.qos.logback.version>1.0.0</ch.qos.logback.version>
     </properties>
 
     <dependencies>
@@ -93,21 +94,15 @@
     
         <!-- Logging -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.6.3</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>1.0.0</version>
+            <version>${ch.qos.logback.version}</version>
             <scope>test</scope>
         </dependency>    
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.0.0</version>
+            <version>${ch.qos.logback.version}</version>
             <scope>test</scope>
         </dependency>    
     
@@ -134,7 +129,7 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.9.1</version>
-            <scope>compile</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
