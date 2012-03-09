@@ -28,7 +28,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testUriParsingOfDefaultExchangeWithQueueAndRoutingKeyForConsumer() {
     	String remaining = ":queue1:routingKey1";
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null, null);
     	
     	Assert.assertEquals("", endpoint.exchangeName);
     	Assert.assertEquals("queue1", endpoint.queueName);
@@ -39,7 +39,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testUriParsingOfDefaultExchangeWithRoutingKeyForProducer() {
         String remaining = ":routingKey1";
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null, null);
     	
     	Assert.assertEquals("", endpoint.exchangeName);
     	Assert.assertEquals("routingKey1", ReflectionTestUtils.getField(endpoint, "tempQueueOrKey"));
@@ -49,7 +49,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testIsUsingDefaultExchangeTrue() {
         String remaining = ":routingKey1";
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null, null);
     	
     	Assert.assertTrue(endpoint.isUsingDefaultExchange());
     }
@@ -58,7 +58,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testIsNotUsingDefaultExchangeFalse() {
         String remaining = "exchange1:routingKey1";
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null, null);
     	
     	Assert.assertFalse(endpoint.isUsingDefaultExchange());
     }    
