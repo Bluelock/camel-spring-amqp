@@ -52,7 +52,7 @@ public class SpringAMQPComponent extends DefaultComponent {
 
     @Override
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, getAmqpTemplate(), getAmqpAdministration(), getCamelContext());
+        SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(this, uri, remaining, getAmqpTemplate(), getAmqpAdministration());
         setProperties(endpoint, parameters);
         return endpoint;
     }

@@ -4,10 +4,7 @@
 
 package amqp.spring.camel.component;
 
-import org.apache.camel.CamelContext;
-import org.apache.camel.Consumer;
-import org.apache.camel.Processor;
-import org.apache.camel.Producer;
+import org.apache.camel.*;
 import org.apache.camel.impl.DefaultEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +50,8 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     //Place them here until we determine if we're a consumer or producer.
     private String tempQueueOrKey;
     
-    public SpringAMQPEndpoint(String remaining, AmqpTemplate template, AmqpAdmin admin, CamelContext camelContext) {
-        //Camel <=2.5 does not initialize the context automatically, we need to do it explicitly
-        if(getCamelContext() == null) {
-            LOG.debug("CamelContext is null, falling back to Camel <=2.5 conventions.");
-            setCamelContext(camelContext);
-        }
+    public SpringAMQPEndpoint(Component component, String uri, String remaining, AmqpTemplate template, AmqpAdmin admin) {
+        super(uri, component);
         
         LOG.info("Creating endpoint for {}", remaining);
         this.amqpAdministration = admin;
