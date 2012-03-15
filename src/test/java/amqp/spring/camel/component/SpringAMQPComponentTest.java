@@ -19,6 +19,14 @@ public class SpringAMQPComponentTest extends CamelTestSupport {
         Assert.assertNotNull(component);
     }
     
+    @Test
+    public void testFindRootCause() throws Exception {
+        IllegalStateException child = new IllegalStateException("Child Exception");
+        RuntimeException parent = new RuntimeException("Parent Exception", child);
+        RuntimeException grandparent = new RuntimeException("Grandparent Exception", parent);
+        Assert.assertEquals(child, SpringAMQPComponent.findRootCause(grandparent));
+    }
+    
     @Override
     protected CamelContext createCamelContext() throws Exception {
         ConnectionFactory factory = new CachingConnectionFactory();

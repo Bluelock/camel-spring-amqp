@@ -10,6 +10,7 @@ import org.apache.camel.Component;
 import org.apache.camel.Exchange;
 import org.apache.camel.Producer;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.spi.Synchronization;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
@@ -27,7 +28,7 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
     
     @Test 
     public void restartProducer() throws Exception {
-        Producer producer = context().getEndpoint("spring-amqp:myExchange:test.z?durable=false&autodelete=true&exclusive=false").createProducer();
+        Producer producer = context().getEndpoint("spring-amqp:fanoutExchange?durable=false&autodelete=true&exclusive=false").createProducer();
         producer.start();
         producer.stop();
     }
@@ -72,6 +73,22 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
         context().createProducerTemplate().sendBody("direct:test.y", null);
     }
     
+    @Test
+    public void headerRoutingKey() throws Exception {
+        MockEndpoint mockEndpoint = getMockEndpoint("mock:test.v");
+        mockEndpoint.expectedMessageCount(1);
+        context().createProducerTemplate().sendBodyAndHeader("direct:test.v", new ProducerTestObject(), SpringAMQPComponent.ROUTING_KEY_HEADER, "test.v");
+        mockEndpoint.assertIsSatisfied();
+    }
+    
+    @Test
+    public void uriRoutingKey() throws Exception {
+        MockEndpoint mockEndpoint = getMockEndpoint("mock:test.u");
+        mockEndpoint.expectedMessageCount(1);
+        context().createProducerTemplate().sendBody("direct:test.u", new ProducerTestObject());
+        mockEndpoint.assertIsSatisfied();
+    }
+    
     @Override
     protected CamelContext createCamelContext() throws Exception {
         CachingConnectionFactory factory = new CachingConnectionFactory();
@@ -89,10 +106,15 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
         return new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-            	from("direct:test.y").to("spring-amqp::test.y?durable=false&autodelete=true&exclusive=false");
-                from("direct:test.z").to("spring-amqp:myExchange:test.z?durable=false&autodelete=true&exclusive=false");
-                from("direct:test.x").to("spring-amqp:myExchange:test.x?durable=false&autodelete=true&exclusive=false");
-                from("direct:test.w").to("spring-amqp:myExchange:test.w?durable=false&autodelete=true&exclusive=false");
+            	from("direct:test.y").to("spring-amqp::?durable=false&autodelete=true&exclusive=false");
+                from("direct:test.z").to("spring-amqp:fanoutExchange?durable=false&autodelete=true&exclusive=false");
+                from("direct:test.x").to("spring-amqp:fanoutExchange?durable=false&autodelete=true&exclusive=false");
+                from("direct:test.w").to("spring-amqp:fanoutExchange?durable=false&autodelete=true&exclusive=false");
+                from("direct:test.v").to("spring-amqp:topicExchange?type=topic&durable=false&autodelete=true&exclusive=false");
+                from("direct:test.u").to("spring-amqp:topicExchange:test.u?durable=false&autodelete=true&exclusive=false");
+                
+                from("spring-amqp:topicExchange:queue.v:#.v?type=topic&durable=false&type=direct&autodelete=true&exclusive=false").to("mock:test.v");
+                from("spring-amqp:topicExchange:queue.u:#.u?type=topic&durable=false&type=direct&autodelete=true&exclusive=false").to("mock:test.u");
             }
         };
     }

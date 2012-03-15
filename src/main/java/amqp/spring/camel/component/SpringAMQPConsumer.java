@@ -109,8 +109,8 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         if(this.endpoint.isUsingDefaultExchange()) {
             LOG.info("Default exchange is implicitly bound to every queue, with a routing key equal to the queue name");
         } else if (this.binding != null) {
+            LOG.info("Declaring binding {}", this.binding.getRoutingKey());
             this.endpoint.getAmqpAdministration().declareBinding(binding);
-            LOG.info("Declared binding {}", this.binding.getRoutingKey());
         }
         
         this.messageListener.start();

@@ -4,9 +4,7 @@
 
 package amqp.spring.camel.component;
 
-import org.apache.camel.Consumer;
-import org.apache.camel.Processor;
-import org.apache.camel.Producer;
+import org.apache.camel.*;
 import org.apache.camel.impl.DefaultEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +50,9 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     //Place them here until we determine if we're a consumer or producer.
     private String tempQueueOrKey;
     
-    public SpringAMQPEndpoint(String remaining, AmqpTemplate template, AmqpAdmin admin) {
+    public SpringAMQPEndpoint(Component component, String uri, String remaining, AmqpTemplate template, AmqpAdmin admin) {
+        super(uri, component);
+        
         LOG.info("Creating endpoint for {}", remaining);
         this.amqpAdministration = admin;
         this.amqpTemplate = template;
@@ -239,13 +239,16 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     }
     
     org.springframework.amqp.core.Exchange createAMQPExchange() {
-        if(this.exchangeType == null || "direct".equals(this.exchangeType)) {
+        if("direct".equals(this.exchangeType)) {
             return new DirectExchange(this.exchangeName, this.durable, this.autodelete);
         } else if("fanout".equals(this.exchangeType)) {
             return new FanoutExchange(this.exchangeName, this.durable, this.autodelete);
         } else if("headers".equals(this.exchangeType)) {
             return new HeadersExchange(this.exchangeName, this.durable, this.autodelete);
         } else if("topic".equals(this.exchangeType)) {
+            return new TopicExchange(this.exchangeName, this.durable, this.autodelete);
+        //We have a routing key but no explicit exchange type, assume topic exchange
+        } else if(this.routingKey != null) { 
             return new TopicExchange(this.exchangeName, this.durable, this.autodelete);
         } else {
             return new DirectExchange(this.exchangeName, this.durable, this.autodelete);

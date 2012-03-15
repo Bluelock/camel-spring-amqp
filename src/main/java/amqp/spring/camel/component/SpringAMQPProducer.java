@@ -11,6 +11,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultAsyncProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
@@ -59,10 +60,17 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         
         this.exchange = this.endpoint.createAMQPExchange();
         if (this.endpoint.isUsingDefaultExchange()) {
-            LOG.info("Using default exchange");
+            LOG.info("Using default exchange of type {}", this.exchange.getClass().getSimpleName());
         } else {
-            this.endpoint.amqpAdministration.declareExchange(this.exchange);
-            LOG.info("Declared exchange {}", this.exchange.getName());
+            LOG.info("Declaring exchange {} of type {}", this.exchange.getName(), this.exchange.getClass().getSimpleName());
+            try {
+                this.endpoint.amqpAdministration.declareExchange(this.exchange);
+            } catch(AmqpIOException e) {
+                //The actual reason for failed exceptions is often swallowed up by Camel or Spring, find it
+                Throwable rootCause = SpringAMQPComponent.findRootCause(e);
+                LOG.error("Could not initialize exchange!", rootCause);
+                throw e;
+            }
         }
 
         //Initialize execution pool
@@ -111,15 +119,18 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                 LOG.warn("Cannot find RabbitMQ AMQP Template, falling back to simple message converter");
                 msgConverter = new SimpleMessageConverter();
             }
+            
+            String routingKeyHeader = message.getHeader(SpringAMQPComponent.ROUTING_KEY_HEADER, String.class);
+            String routingKey = routingKeyHeader != null ? routingKeyHeader : endpoint.routingKey;
 
             if(exchange.getPattern().isOutCapable()) {
                 LOG.debug("Synchronous send and request for exchange {}", exchange.getExchangeId());
-                Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(endpoint.exchangeName, endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
+                Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                 SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
                 exchange.setOut(camelResponse);
             } else {
                 LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
-                endpoint.getAmqpTemplate().send(endpoint.exchangeName, endpoint.routingKey, inMessage.toAMQPMessage(msgConverter));
+                endpoint.getAmqpTemplate().send(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
             }
             
             if(callback != null) 

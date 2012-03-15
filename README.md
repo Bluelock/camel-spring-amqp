@@ -21,6 +21,8 @@ If you wish to use a routing key, URIs have the structure:
 
 The routing key is optional, but Queue Name and Exchange Name are required for consumers. Just the Exchange Name is required for producers.
 
+Producers can also defer the routing key to the message header, where the ROUTING_KEY header could be set to the appropriate routing key.
+
 Options to the URI include the exchange type, which defaults to direct if none is specified.
 
 For header based exchanges, the URI is similar but name/value pairs can be specified in place of the routing key. For example:
