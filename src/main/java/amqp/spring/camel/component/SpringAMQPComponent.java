@@ -109,5 +109,10 @@ public class SpringAMQPComponent extends DefaultComponent {
 
     public void setAmqpTemplate(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
-    }    
+    } 
+    
+    public static Throwable findRootCause(Throwable t) {
+        if(t.getCause() == null) return t;
+        return findRootCause(t.getCause());
+    }
 }

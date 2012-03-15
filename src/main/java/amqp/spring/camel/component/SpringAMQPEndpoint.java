@@ -239,13 +239,16 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     }
     
     org.springframework.amqp.core.Exchange createAMQPExchange() {
-        if(this.exchangeType == null || "direct".equals(this.exchangeType)) {
+        if("direct".equals(this.exchangeType)) {
             return new DirectExchange(this.exchangeName, this.durable, this.autodelete);
         } else if("fanout".equals(this.exchangeType)) {
             return new FanoutExchange(this.exchangeName, this.durable, this.autodelete);
         } else if("headers".equals(this.exchangeType)) {
             return new HeadersExchange(this.exchangeName, this.durable, this.autodelete);
         } else if("topic".equals(this.exchangeType)) {
+            return new TopicExchange(this.exchangeName, this.durable, this.autodelete);
+        //We have a routing key but no explicit exchange type, assume topic exchange
+        } else if(this.routingKey != null) { 
             return new TopicExchange(this.exchangeName, this.durable, this.autodelete);
         } else {
             return new DirectExchange(this.exchangeName, this.durable, this.autodelete);

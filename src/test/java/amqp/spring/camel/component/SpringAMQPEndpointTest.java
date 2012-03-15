@@ -71,6 +71,18 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	Assert.assertFalse(endpoint.isUsingDefaultExchange());
     }    
         
+    @Test
+    public void testHashDelimiters() {
+        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
+        String remaining = "exchange1:#.routingKey1.#";
+        String uri = "spring-amqp"+remaining;
+    	
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
+    	
+        //Ensure things can be printed correctly; setEndpoint(String) has had issues previously
+    	Assert.assertNotNull(endpoint.toString());
+    }    
+        
     @Override
     protected CamelContext createCamelContext() throws Exception {
         ConnectionFactory factory = new CachingConnectionFactory();
