@@ -61,7 +61,8 @@ public class ContrivedLoadTest {
         Assert.assertEquals(messageCount, received);
         //Assuming 1 second delay per message, elapsed time shouldn't exceed the number of messages sent 
         //dividied by the number of messages that can be simultaneously consumed.
-        Assert.assertTrue(elapsedTime < (messageCount / (double) maxPoolSize));
+        Assert.assertTrue(String.format("Possible performance issue: %d messages took %f seconds with %d consumers", messageCount, elapsedTime, maxPoolSize),
+                elapsedTime < (messageCount / (double) maxPoolSize));
     }
     
     @Test
@@ -87,7 +88,8 @@ public class ContrivedLoadTest {
         Assert.assertEquals(messageCount, received);
         //Assuming 1 second delay per message, elapsed time shouldn't exceed the number of messages sent 
         //dividied by the number of messages that can be simultaneously consumed.
-        Assert.assertTrue(elapsedTime < (messageCount / (double) maxPoolSize));
+        Assert.assertTrue(String.format("Possible performance issue: %d messages took %f seconds with %d consumers", messageCount, elapsedTime, maxPoolSize), 
+                elapsedTime < (messageCount / (double) maxPoolSize));
     }
     
     @Handler
