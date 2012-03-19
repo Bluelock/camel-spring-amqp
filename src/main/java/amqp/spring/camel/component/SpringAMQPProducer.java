@@ -11,6 +11,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultAsyncProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpConnectException;
 import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -70,6 +71,11 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                 Throwable rootCause = SpringAMQPComponent.findRootCause(e);
                 LOG.error("Could not initialize exchange!", rootCause);
                 throw e;
+            } catch (AmqpConnectException e) {
+                LOG.error("Producer cannot connect to broker - stopping endpoint {}", this.endpoint.toString(), e);
+                doStop();
+                this.endpoint.stop();
+                return;
             }
         }
 
