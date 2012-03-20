@@ -72,7 +72,7 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                 }
             } catch (AmqpConnectException e) {
                 LOG.error("Consumer cannot connect to broker - stopping endpoint {}", this.endpoint.toString(), e);
-                doStop();
+                stop();
                 this.endpoint.stop();
                 return;
             }
