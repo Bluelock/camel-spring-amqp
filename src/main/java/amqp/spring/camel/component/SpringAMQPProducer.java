@@ -95,7 +95,9 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     public void doStop() throws Exception {
         super.doStop();
         
-        this.threadPool.shutdownNow();
+        if(this.threadPool != null) {
+            this.threadPool.shutdownNow();
+        }
     }
     
     private class AMQPProducerTask implements Runnable {
