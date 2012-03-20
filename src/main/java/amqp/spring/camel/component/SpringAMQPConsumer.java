@@ -17,6 +17,7 @@ import org.apache.camel.impl.DefaultConsumer;
 import org.apache.camel.impl.DefaultExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpConnectException;
 import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Address;
@@ -69,6 +70,11 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                 } else {
                     LOG.warn("Could not declare exchange {}, possible re-declaration of a different type?", exchange.getName(), e);
                 }
+            } catch (AmqpConnectException e) {
+                LOG.error("Consumer cannot connect to broker - stopping endpoint {}", this.endpoint.toString(), e);
+                stop();
+                this.endpoint.stop();
+                return;
             }
         }
 
@@ -109,8 +115,8 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         if(this.endpoint.isUsingDefaultExchange()) {
             LOG.info("Default exchange is implicitly bound to every queue, with a routing key equal to the queue name");
         } else if (this.binding != null) {
+            LOG.info("Declaring binding {}", this.binding.getRoutingKey());
             this.endpoint.getAmqpAdministration().declareBinding(binding);
-            LOG.info("Declared binding {}", this.binding.getRoutingKey());
         }
         
         this.messageListener.start();
