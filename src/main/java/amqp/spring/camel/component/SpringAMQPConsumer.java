@@ -29,6 +29,8 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.StatefulRetryOperationsInterceptorFactoryBean;
+import org.springframework.amqp.rabbit.connection.Connection;
+import org.springframework.amqp.rabbit.connection.ConnectionListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.retry.MessageKeyGenerator;
@@ -37,7 +39,7 @@ import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.ErrorHandler;
 
-public class SpringAMQPConsumer extends DefaultConsumer {
+public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionListener {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPConsumer.class);
     private static final String TTL_QUEUE_ARGUMENT = "x-message-ttl";
     
@@ -149,6 +151,28 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         return pairs;
     }
 
+    @Override
+    public void onCreate(Connection connection) {
+        if(isStarting()) return;
+        
+        LOG.warn("Noticed that the broker has come online, attempting to re-start {}", this.getEndpoint().getEndpointUri());
+        try {
+            doStart();
+        } catch(Exception e) {
+            LOG.error("Could not re-start consumer {}", this.getEndpoint().getEndpointUri(), e);
+        }
+    }
+
+    @Override
+    public void onClose(Connection connection) {
+        LOG.warn("Noticed that the broker has gone offline, attempting to stop {}", this.getEndpoint().getEndpointUri());
+        try {
+            doStop();
+        } catch(Exception e) {
+            LOG.error("Could not stop consumer {}", this.getEndpoint().getEndpointUri(), e);
+        }
+    }
+    
     //We have to ask the RabbitMQ Template for converters, the interface doesn't have a way to get MessageConverter
     class RabbitMQConsumerTask implements MessageListener {
         private MessageConverter msgConverter;
@@ -160,10 +184,18 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             this.listenerContainer.setConnectionFactory(template.getConnectionFactory());
             this.listenerContainer.setQueueNames(queue);
             this.listenerContainer.setConcurrentConsumers(concurrentConsumers);
-            this.listenerContainer.setAcknowledgeMode(AcknowledgeMode.AUTO);
-            this.listenerContainer.setErrorHandler(getErrorHandler());
             this.listenerContainer.setPrefetchCount(prefetchCount);
+            
+            //Set error handling (send it to Camel)
+            this.listenerContainer.setErrorHandler(getErrorHandler());
             this.listenerContainer.setAdviceChain(getAdviceChain());
+            
+            //Wait 10 seconds for consumption to stop upon shutdown
+            this.listenerContainer.setShutdownTimeout(10000);
+            
+            //Transactions are currently not supported
+            this.listenerContainer.setChannelTransacted(false);
+            this.listenerContainer.setAcknowledgeMode(AcknowledgeMode.NONE);
         }
         
         public void start() {
@@ -188,6 +220,10 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             };
         }
         
+        /**
+         * Do not have Spring AMQP re-try messages upon failure, leave it to Camel
+         * @return An advice chain populated with a NeverRetryPolicy
+         */
         public final Advice[] getAdviceChain() {
             RetryTemplate retryRule = new RetryTemplate();
             retryRule.setRetryPolicy(new NeverRetryPolicy());

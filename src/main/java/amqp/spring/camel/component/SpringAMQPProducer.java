@@ -14,11 +14,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpConnectException;
 import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.connection.Connection;
+import org.springframework.amqp.rabbit.connection.ConnectionListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 
-public class SpringAMQPProducer extends DefaultAsyncProducer {
+public class SpringAMQPProducer extends DefaultAsyncProducer implements ConnectionListener {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
     
     protected SpringAMQPEndpoint endpoint;
@@ -103,6 +105,28 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         
         if(this.threadPool != null) {
             this.threadPool.shutdownNow();
+        }
+    }
+
+    @Override
+    public void onCreate(Connection connection) {
+        if(isStarting()) return;
+        
+        LOG.warn("Noticed that the broker has come online, attempting to re-start {}", this.getEndpoint().getEndpointUri());
+        try {
+            doStart();
+        } catch(Exception e) {
+            LOG.error("Could not re-start producer {}", this.getEndpoint().getEndpointUri(), e);
+        }
+    }
+
+    @Override
+    public void onClose(Connection connection) {
+        LOG.warn("Noticed that the broker has gone offline, attempting to stop {}", this.getEndpoint().getEndpointUri());
+        try {
+            doStop();
+        } catch(Exception e) {
+            LOG.error("Could not stop producer {}", this.getEndpoint().getEndpointUri(), e);
         }
     }
     

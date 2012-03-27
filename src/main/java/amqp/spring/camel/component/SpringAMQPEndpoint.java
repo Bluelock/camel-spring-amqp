@@ -14,6 +14,7 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.HeadersExchange;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 /**
  * RabbitMQ Consumer URIs are in the format of:<br/>
@@ -85,7 +86,9 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
             this.tempQueueOrKey = null;
         }
         
-        return new SpringAMQPProducer(this);
+        SpringAMQPProducer producer = new SpringAMQPProducer(this);
+        ((RabbitTemplate) getAmqpTemplate()).getConnectionFactory().addConnectionListener(producer);
+        return producer;
     }
 
     @Override
@@ -104,7 +107,9 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         if(this.queueName == null)
             throw new IllegalStateException("Cannot have null queue name for "+getEndpointUri());
         
-        return new SpringAMQPConsumer(this, processor);
+        SpringAMQPConsumer consumer = new SpringAMQPConsumer(this, processor);
+        ((RabbitTemplate) getAmqpTemplate()).getConnectionFactory().addConnectionListener(consumer);
+        return consumer;
     }
 
     public AmqpAdmin getAmqpAdministration() {
