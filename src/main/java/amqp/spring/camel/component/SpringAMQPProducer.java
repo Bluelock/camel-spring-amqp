@@ -20,12 +20,10 @@ import org.springframework.amqp.support.converter.SimpleMessageConverter;
 
 public class SpringAMQPProducer extends DefaultAsyncProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
-    private static final long BACK_OFF_MILLIS = 10000L; //TODO Make this configurable
     
     protected SpringAMQPEndpoint endpoint;
     private org.springframework.amqp.core.Exchange exchange;
     private ExecutorService threadPool;
-    private Long backOffUntil = null;
     
     public SpringAMQPProducer(SpringAMQPEndpoint endpoint) {
         super(endpoint);
@@ -46,18 +44,6 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                 exchange.setException(new RejectedExecutionException("SpringAMQPProducer is not yet initialized!"));
             callback.done(true);
             return true;
-        }
-        
-        if(this.backOffUntil != null) { //Do we need to temporarily halt production due to broker errors?
-            if(this.backOffUntil > System.currentTimeMillis()) {
-                try {
-                    Thread.sleep(this.backOffUntil - System.currentTimeMillis());
-                } catch (InterruptedException e) {
-                    LOG.error("Interrupting my precious back-off thread sleep", e);
-                }
-            } else {
-                this.backOffUntil = null;
-            }
         }
         
         this.threadPool.submit(new AMQPProducerTask(exchange, callback));
@@ -124,13 +110,6 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         }
     }
     
-    private void backOffUntil() {
-        if(this.backOffUntil == null) {
-            LOG.error("Backing off message production for {} seconds", BACK_OFF_MILLIS / 1000.0);
-            this.backOffUntil = System.currentTimeMillis() + BACK_OFF_MILLIS;
-        }
-    }
-
     private class AMQPProducerTask implements Runnable {
         Exchange exchange;
         AsyncCallback callback;
@@ -172,10 +151,6 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                     LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
                     endpoint.getAmqpTemplate().send(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                 }
-            } catch(AmqpIOException e) {
-                backOffUntil();
-            } catch(AmqpConnectException e) {
-                backOffUntil();
             } catch (Throwable t) {
                 LOG.error("Could not deliver message via AMQP", t);
             }
