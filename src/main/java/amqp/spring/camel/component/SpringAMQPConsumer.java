@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.aopalliance.aop.Advice;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
@@ -17,6 +18,7 @@ import org.apache.camel.impl.DefaultConsumer;
 import org.apache.camel.impl.DefaultExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpConnectException;
 import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Address;
@@ -28,6 +30,8 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.StatefulRetryOperationsInterceptorFactoryBean;
+import org.springframework.amqp.rabbit.connection.Connection;
+import org.springframework.amqp.rabbit.connection.ConnectionListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.retry.MessageKeyGenerator;
@@ -36,7 +40,7 @@ import org.springframework.retry.policy.NeverRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.ErrorHandler;
 
-public class SpringAMQPConsumer extends DefaultConsumer {
+public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionListener {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPConsumer.class);
     private static final String TTL_QUEUE_ARGUMENT = "x-message-ttl";
     
@@ -44,6 +48,7 @@ public class SpringAMQPConsumer extends DefaultConsumer {
     private RabbitMQConsumerTask messageListener;
     private Queue queue;
     private Binding binding;
+    private final AtomicBoolean failed = new AtomicBoolean(false);
     
     public SpringAMQPConsumer(SpringAMQPEndpoint endpoint, Processor processor) {
         super(endpoint, processor);
@@ -69,6 +74,11 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                 } else {
                     LOG.warn("Could not declare exchange {}, possible re-declaration of a different type?", exchange.getName(), e);
                 }
+            } catch (AmqpConnectException e) {
+                LOG.error("Consumer cannot connect to broker - stopping endpoint {}", this.endpoint.toString(), e);
+                stop();
+                this.endpoint.stop();
+                return;
             }
         }
 
@@ -109,16 +119,16 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         if(this.endpoint.isUsingDefaultExchange()) {
             LOG.info("Default exchange is implicitly bound to every queue, with a routing key equal to the queue name");
         } else if (this.binding != null) {
+            LOG.info("Declaring binding {}", this.binding.getRoutingKey());
             this.endpoint.getAmqpAdministration().declareBinding(binding);
-            LOG.info("Declared binding {}", this.binding.getRoutingKey());
         }
         
-        this.messageListener.start();
+        if(! this.messageListener.listenerContainer.isActive())
+            this.messageListener.start();
     }
 
     @Override
     public void doStop() throws Exception {
-        this.messageListener.stop();
         super.doStop();
     }
     
@@ -143,10 +153,34 @@ public class SpringAMQPConsumer extends DefaultConsumer {
         return pairs;
     }
 
+    @Override
+    public void onCreate(Connection connection) {
+        if(! this.failed.compareAndSet(true, false)) return; //We are not in a failure mode
+
+        LOG.warn("Noticed that the broker has come online, attempting to re-start consumer {}", this.getEndpoint().getEndpointUri());
+        try {
+            doStart();
+        } catch(Exception e) {
+            LOG.error("Could not re-start consumer {}", this.getEndpoint().getEndpointUri(), e);
+        }
+    }
+
+    @Override
+    public void onClose(Connection connection) {
+        this.failed.set(true);
+        LOG.warn("Noticed that the broker has gone offline, attempting to stop consumer {}", this.getEndpoint().getEndpointUri());
+        try {
+            doStop();
+        } catch(Exception e) {
+            LOG.error("Could not stop consumer {}", this.getEndpoint().getEndpointUri(), e);
+        }
+    }
+    
     //We have to ask the RabbitMQ Template for converters, the interface doesn't have a way to get MessageConverter
     class RabbitMQConsumerTask implements MessageListener {
         private MessageConverter msgConverter;
         private SimpleMessageListenerContainer listenerContainer;
+        private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
         
         public RabbitMQConsumerTask(RabbitTemplate template, String queue, int concurrentConsumers, int prefetchCount) {
             this.msgConverter = template.getMessageConverter();
@@ -154,34 +188,57 @@ public class SpringAMQPConsumer extends DefaultConsumer {
             this.listenerContainer.setConnectionFactory(template.getConnectionFactory());
             this.listenerContainer.setQueueNames(queue);
             this.listenerContainer.setConcurrentConsumers(concurrentConsumers);
-            this.listenerContainer.setAcknowledgeMode(AcknowledgeMode.AUTO);
-            this.listenerContainer.setErrorHandler(getErrorHandler());
             this.listenerContainer.setPrefetchCount(prefetchCount);
+            
+            //Set error handling (send it to Camel)
+            this.listenerContainer.setErrorHandler(getErrorHandler());
             this.listenerContainer.setAdviceChain(getAdviceChain());
+            
+            //Set timeouts
+            this.listenerContainer.setShutdownTimeout(DEFAULT_TIMEOUT_MILLIS);
+            this.listenerContainer.setReceiveTimeout(DEFAULT_TIMEOUT_MILLIS);
+            this.listenerContainer.setRecoveryInterval(DEFAULT_TIMEOUT_MILLIS / 2);
+           
+            //Transactions are currently not supported
+            this.listenerContainer.setChannelTransacted(false);
+            this.listenerContainer.setAcknowledgeMode(AcknowledgeMode.NONE);
         }
         
         public void start() {
             this.listenerContainer.setMessageListener(this);
             this.listenerContainer.start();
+            LOG.info("Started AMQP Async Listeners for {}", endpoint.getEndpointUri());
         }
         
         public void stop() {
+            this.listenerContainer.setConcurrentConsumers(0);
+            this.listenerContainer.setPrefetchCount(0);
             this.listenerContainer.stop();
         }
         
         public void shutdown() {
             this.listenerContainer.shutdown();
+            this.listenerContainer.destroy();
         }
 
         public final ErrorHandler getErrorHandler() {
             return new ErrorHandler() {
                 @Override
                 public void handleError(Throwable t) {
+                    if(t instanceof AmqpConnectException) {
+                        LOG.error("AMQP Connection error, marking this connection as failed");
+                        onClose(null);
+                    }
+                    
                     getExceptionHandler().handleException(t);
                 }
             };
         }
         
+        /**
+         * Do not have Spring AMQP re-try messages upon failure, leave it to Camel
+         * @return An advice chain populated with a NeverRetryPolicy
+         */
         public final Advice[] getAdviceChain() {
             RetryTemplate retryRule = new RetryTemplate();
             retryRule.setRetryPolicy(new NeverRetryPolicy());
@@ -213,8 +270,13 @@ public class SpringAMQPConsumer extends DefaultConsumer {
                 org.apache.camel.Message outMessage = exchange.getOut();
                 SpringAMQPMessage replyMessage = new SpringAMQPMessage(outMessage);
                 exchange.setOut(replyMessage); //Swap out the outbound message
-                
-                endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), replyMessage.toAMQPMessage(msgConverter));
+
+                try {
+                    endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), replyMessage.toAMQPMessage(msgConverter));
+                } catch(AmqpConnectException e) {
+                    LOG.error("AMQP Connection error, marking this connection as failed");
+                    onClose(null);
+                }
             }
         }
     }
