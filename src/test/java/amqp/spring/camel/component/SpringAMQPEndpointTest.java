@@ -26,9 +26,11 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     
     @Test
     public void testUriParsingOfDefaultExchangeWithQueueAndRoutingKeyForConsumer() {
+        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
     	String remaining = ":queue1:routingKey1";
+        String uri = "spring-amqp"+remaining;
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
     	Assert.assertEquals("", endpoint.exchangeName);
     	Assert.assertEquals("queue1", endpoint.queueName);
@@ -37,9 +39,11 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     
     @Test
     public void testUriParsingOfDefaultExchangeWithRoutingKeyForProducer() {
+        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
         String remaining = ":routingKey1";
+        String uri = "spring-amqp"+remaining;
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
     	Assert.assertEquals("", endpoint.exchangeName);
     	Assert.assertEquals("routingKey1", ReflectionTestUtils.getField(endpoint, "tempQueueOrKey"));
@@ -47,20 +51,36 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     
     @Test
     public void testIsUsingDefaultExchangeTrue() {
+        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
         String remaining = ":routingKey1";
+        String uri = "spring-amqp"+remaining;
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
     	Assert.assertTrue(endpoint.isUsingDefaultExchange());
     }
     
     @Test
     public void testIsNotUsingDefaultExchangeFalse() {
+        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
         String remaining = "exchange1:routingKey1";
+        String uri = "spring-amqp"+remaining;
     	
-    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, null, null);
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
     	Assert.assertFalse(endpoint.isUsingDefaultExchange());
+    }    
+        
+    @Test
+    public void testHashDelimiters() {
+        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
+        String remaining = "exchange1:#.routingKey1.#";
+        String uri = "spring-amqp"+remaining;
+    	
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
+    	
+        //Ensure things can be printed correctly; setEndpoint(String) has had issues previously
+    	Assert.assertNotNull(endpoint.toString());
     }    
         
     @Override
