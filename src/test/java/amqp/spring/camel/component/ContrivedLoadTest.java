@@ -48,7 +48,7 @@ public class ContrivedLoadTest {
 
         startTime = System.currentTimeMillis();
         for(Future<String> future : futures) {
-            String response = future.get(5000, TimeUnit.MILLISECONDS);
+            String response = future.get(10000, TimeUnit.MILLISECONDS);
             if("RESPONSE".equals(response)) ++received;
         }
         float elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0f;

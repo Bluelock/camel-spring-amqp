@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.aopalliance.aop.Advice;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
@@ -47,7 +48,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     private RabbitMQConsumerTask messageListener;
     private Queue queue;
     private Binding binding;
-    private boolean failed;
+    private final AtomicBoolean failed = new AtomicBoolean(false);
     
     public SpringAMQPConsumer(SpringAMQPEndpoint endpoint, Processor processor) {
         super(endpoint, processor);
@@ -154,12 +155,11 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
     @Override
     public void onCreate(Connection connection) {
-        if(! this.failed) return; //We're not responding to a failure
-        
+        if(! this.failed.compareAndSet(true, false)) return; //We are not in a failure mode
+
         LOG.warn("Noticed that the broker has come online, attempting to re-start consumer {}", this.getEndpoint().getEndpointUri());
         try {
             doStart();
-            this.failed = false;
         } catch(Exception e) {
             LOG.error("Could not re-start consumer {}", this.getEndpoint().getEndpointUri(), e);
         }
@@ -167,7 +167,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
     @Override
     public void onClose(Connection connection) {
-        this.failed = true;
+        this.failed.set(true);
         LOG.warn("Noticed that the broker has gone offline, attempting to stop consumer {}", this.getEndpoint().getEndpointUri());
         try {
             doStop();
