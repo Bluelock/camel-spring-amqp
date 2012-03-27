@@ -26,6 +26,7 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
     protected SpringAMQPEndpoint endpoint;
     private org.springframework.amqp.core.Exchange exchange;
     private ExecutorService threadPool;
+    private boolean failed;
     
     public SpringAMQPProducer(SpringAMQPEndpoint endpoint) {
         super(endpoint);
@@ -96,7 +97,9 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
     public void doShutdown() throws Exception {
         super.doShutdown();
         
-        this.threadPool.shutdown();
+        if(this.threadPool != null) {
+            this.threadPool.shutdownNow();
+        }
     }
     
     @Override
@@ -110,11 +113,12 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
 
     @Override
     public void onCreate(Connection connection) {
-        if(isStarting()) return;
+        if(! this.failed) return; //We're not recovering from a failure, nevermind
         
-        LOG.warn("Noticed that the broker has come online, attempting to re-start {}", this.getEndpoint().getEndpointUri());
+        LOG.warn("Noticed that the broker has come online, attempting to re-start producer {}", this.getEndpoint().getEndpointUri());
         try {
             doStart();
+            this.failed = false;
         } catch(Exception e) {
             LOG.error("Could not re-start producer {}", this.getEndpoint().getEndpointUri(), e);
         }
@@ -122,7 +126,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
 
     @Override
     public void onClose(Connection connection) {
-        LOG.warn("Noticed that the broker has gone offline, attempting to stop {}", this.getEndpoint().getEndpointUri());
+        LOG.warn("Noticed that the broker has gone offline, attempting to stop producer {}", this.getEndpoint().getEndpointUri());
+        this.failed = true;
         try {
             doStop();
         } catch(Exception e) {
@@ -171,6 +176,9 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
                     LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
                     endpoint.getAmqpTemplate().send(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                 }
+            } catch (AmqpConnectException e) {
+                LOG.error("AMQP Connection error, marking this connection as failed", e);
+                onClose(null);
             } catch (Throwable t) {
                 LOG.error("Could not deliver message via AMQP", t);
             }

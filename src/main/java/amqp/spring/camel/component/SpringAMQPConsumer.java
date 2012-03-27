@@ -47,17 +47,19 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     private RabbitMQConsumerTask messageListener;
     private Queue queue;
     private Binding binding;
+    private boolean failed;
     
     public SpringAMQPConsumer(SpringAMQPEndpoint endpoint, Processor processor) {
         super(endpoint, processor);
         this.endpoint = endpoint;
-        this.messageListener = new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate(), 
-                this.endpoint.queueName, this.endpoint.getConcurrentConsumers(), this.endpoint.getPrefetchCount());
     }
 
     @Override
     public void doStart() throws Exception {
         super.doStart();
+        
+        this.messageListener = new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate(), 
+                this.endpoint.queueName, this.endpoint.getConcurrentConsumers(), this.endpoint.getPrefetchCount());
         
         org.springframework.amqp.core.Exchange exchange = this.endpoint.createAMQPExchange();
         if (this.endpoint.isUsingDefaultExchange()) {
@@ -127,11 +129,13 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     @Override
     public void doStop() throws Exception {
         this.messageListener.stop();
+        this.messageListener.shutdown();
         super.doStop();
     }
     
     @Override
     public void doShutdown() throws Exception {
+        this.messageListener.stop();
         this.messageListener.shutdown();
         super.shutdown();
     }
@@ -153,11 +157,12 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
     @Override
     public void onCreate(Connection connection) {
-        if(isStarting()) return;
+        if(! this.failed) return; //We're not responding to a failure
         
-        LOG.warn("Noticed that the broker has come online, attempting to re-start {}", this.getEndpoint().getEndpointUri());
+        LOG.warn("Noticed that the broker has come online, attempting to re-start consumer {}", this.getEndpoint().getEndpointUri());
         try {
             doStart();
+            this.failed = false;
         } catch(Exception e) {
             LOG.error("Could not re-start consumer {}", this.getEndpoint().getEndpointUri(), e);
         }
@@ -165,7 +170,8 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
     @Override
     public void onClose(Connection connection) {
-        LOG.warn("Noticed that the broker has gone offline, attempting to stop {}", this.getEndpoint().getEndpointUri());
+        LOG.warn("Noticed that the broker has gone offline, attempting to stop consumer {}", this.getEndpoint().getEndpointUri());
+        this.failed = true;
         try {
             doStop();
         } catch(Exception e) {
@@ -215,6 +221,11 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             return new ErrorHandler() {
                 @Override
                 public void handleError(Throwable t) {
+                    if(t instanceof AmqpConnectException) {
+                        LOG.error("AMQP Connection error, marking this connection as failed");
+                        onClose(null);
+                    }
+                    
                     getExceptionHandler().handleException(t);
                 }
             };
@@ -255,8 +266,13 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
                 org.apache.camel.Message outMessage = exchange.getOut();
                 SpringAMQPMessage replyMessage = new SpringAMQPMessage(outMessage);
                 exchange.setOut(replyMessage); //Swap out the outbound message
-                
-                endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), replyMessage.toAMQPMessage(msgConverter));
+
+                try {
+                    endpoint.getAmqpTemplate().send(replyToAddress.getExchangeName(), replyToAddress.getRoutingKey(), replyMessage.toAMQPMessage(msgConverter));
+                } catch(AmqpConnectException e) {
+                    LOG.error("AMQP Connection error, marking this connection as failed");
+                    onClose(null);
+                }
             }
         }
     }
