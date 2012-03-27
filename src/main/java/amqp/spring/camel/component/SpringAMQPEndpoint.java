@@ -86,9 +86,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
             this.tempQueueOrKey = null;
         }
         
-        SpringAMQPProducer producer = new SpringAMQPProducer(this);
-        ((RabbitTemplate) getAmqpTemplate()).getConnectionFactory().addConnectionListener(producer);
-        return producer;
+        return new SpringAMQPProducer(this);
     }
 
     @Override

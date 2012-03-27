@@ -14,19 +14,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpConnectException;
 import org.springframework.amqp.AmqpIOException;
 import org.springframework.amqp.core.Message;
-import org.springframework.amqp.rabbit.connection.Connection;
-import org.springframework.amqp.rabbit.connection.ConnectionListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 
-public class SpringAMQPProducer extends DefaultAsyncProducer implements ConnectionListener {
+public class SpringAMQPProducer extends DefaultAsyncProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
+    private static final long BACK_OFF_MILLIS = 10000L; //TODO Make this configurable
     
     protected SpringAMQPEndpoint endpoint;
     private org.springframework.amqp.core.Exchange exchange;
     private ExecutorService threadPool;
-    private boolean failed;
+    private Long backOffUntil = null;
     
     public SpringAMQPProducer(SpringAMQPEndpoint endpoint) {
         super(endpoint);
@@ -49,7 +48,19 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
             return true;
         }
         
-        this.threadPool.execute(new AMQPProducerTask(exchange, callback));
+        if(this.backOffUntil != null) { //Do we need to temporarily halt production due to broker errors?
+            if(this.backOffUntil > System.currentTimeMillis()) {
+                try {
+                    Thread.sleep(this.backOffUntil - System.currentTimeMillis());
+                } catch (InterruptedException e) {
+                    LOG.error("Interrupting my precious back-off thread sleep", e);
+                }
+            } else {
+                this.backOffUntil = null;
+            }
+        }
+        
+        this.threadPool.submit(new AMQPProducerTask(exchange, callback));
         return false;
     }
     
@@ -98,7 +109,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
         super.doShutdown();
         
         if(this.threadPool != null) {
-            this.threadPool.shutdownNow();
+            this.threadPool.shutdown();
+            this.threadPool = null;
         }
     }
     
@@ -107,34 +119,18 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
         super.doStop();
         
         if(this.threadPool != null) {
-            this.threadPool.shutdownNow();
-        }
-    }
-
-    @Override
-    public void onCreate(Connection connection) {
-        if(! this.failed) return; //We're not recovering from a failure, nevermind
-        
-        LOG.warn("Noticed that the broker has come online, attempting to re-start producer {}", this.getEndpoint().getEndpointUri());
-        try {
-            doStart();
-            this.failed = false;
-        } catch(Exception e) {
-            LOG.error("Could not re-start producer {}", this.getEndpoint().getEndpointUri(), e);
-        }
-    }
-
-    @Override
-    public void onClose(Connection connection) {
-        this.failed = true;
-        LOG.warn("Noticed that the broker has gone offline, attempting to stop producer {}", this.getEndpoint().getEndpointUri());
-        try {
-            doStop();
-        } catch(Exception e) {
-            LOG.error("Could not stop producer {}", this.getEndpoint().getEndpointUri(), e);
+            this.threadPool.shutdown();
+            this.threadPool = null;
         }
     }
     
+    private void backOffUntil() {
+        if(this.backOffUntil == null) {
+            LOG.error("Backing off message production for {} seconds", BACK_OFF_MILLIS / 1000.0);
+            this.backOffUntil = System.currentTimeMillis() + BACK_OFF_MILLIS;
+        }
+    }
+
     private class AMQPProducerTask implements Runnable {
         Exchange exchange;
         AsyncCallback callback;
@@ -176,9 +172,10 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
                     LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
                     endpoint.getAmqpTemplate().send(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                 }
-            } catch (AmqpConnectException e) {
-                LOG.error("AMQP Connection error, marking this connection as failed", e);
-                onClose(null);
+            } catch(AmqpIOException e) {
+                backOffUntil();
+            } catch(AmqpConnectException e) {
+                backOffUntil();
             } catch (Throwable t) {
                 LOG.error("Could not deliver message via AMQP", t);
             }

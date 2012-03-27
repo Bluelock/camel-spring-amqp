@@ -52,14 +52,13 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     public SpringAMQPConsumer(SpringAMQPEndpoint endpoint, Processor processor) {
         super(endpoint, processor);
         this.endpoint = endpoint;
+        this.messageListener = new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate(), 
+                this.endpoint.queueName, this.endpoint.getConcurrentConsumers(), this.endpoint.getPrefetchCount());
     }
 
     @Override
     public void doStart() throws Exception {
         super.doStart();
-        
-        this.messageListener = new RabbitMQConsumerTask((RabbitTemplate) this.endpoint.getAmqpTemplate(), 
-                this.endpoint.queueName, this.endpoint.getConcurrentConsumers(), this.endpoint.getPrefetchCount());
         
         org.springframework.amqp.core.Exchange exchange = this.endpoint.createAMQPExchange();
         if (this.endpoint.isUsingDefaultExchange()) {
@@ -123,19 +122,17 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             this.endpoint.getAmqpAdministration().declareBinding(binding);
         }
         
-        this.messageListener.start();
+        if(! this.messageListener.listenerContainer.isActive())
+            this.messageListener.start();
     }
 
     @Override
     public void doStop() throws Exception {
-        this.messageListener.stop();
-        this.messageListener.shutdown();
         super.doStop();
     }
     
     @Override
     public void doShutdown() throws Exception {
-        this.messageListener.stop();
         this.messageListener.shutdown();
         super.shutdown();
     }
@@ -183,6 +180,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     class RabbitMQConsumerTask implements MessageListener {
         private MessageConverter msgConverter;
         private SimpleMessageListenerContainer listenerContainer;
+        private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
         
         public RabbitMQConsumerTask(RabbitTemplate template, String queue, int concurrentConsumers, int prefetchCount) {
             this.msgConverter = template.getMessageConverter();
@@ -196,9 +194,11 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             this.listenerContainer.setErrorHandler(getErrorHandler());
             this.listenerContainer.setAdviceChain(getAdviceChain());
             
-            //Wait 10 seconds for consumption to stop upon shutdown
-            this.listenerContainer.setShutdownTimeout(10000);
-            
+            //Set timeouts
+            this.listenerContainer.setShutdownTimeout(DEFAULT_TIMEOUT_MILLIS);
+            this.listenerContainer.setReceiveTimeout(DEFAULT_TIMEOUT_MILLIS);
+            this.listenerContainer.setRecoveryInterval(DEFAULT_TIMEOUT_MILLIS / 2);
+           
             //Transactions are currently not supported
             this.listenerContainer.setChannelTransacted(false);
             this.listenerContainer.setAcknowledgeMode(AcknowledgeMode.NONE);
@@ -207,14 +207,18 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
         public void start() {
             this.listenerContainer.setMessageListener(this);
             this.listenerContainer.start();
+            LOG.info("Started AMQP Async Listeners for {}", endpoint.getEndpointUri());
         }
         
         public void stop() {
+            this.listenerContainer.setConcurrentConsumers(0);
+            this.listenerContainer.setPrefetchCount(0);
             this.listenerContainer.stop();
         }
         
         public void shutdown() {
             this.listenerContainer.shutdown();
+            this.listenerContainer.destroy();
         }
 
         public final ErrorHandler getErrorHandler() {

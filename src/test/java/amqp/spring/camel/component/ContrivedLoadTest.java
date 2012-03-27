@@ -8,10 +8,7 @@ package amqp.spring.camel.component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.*;
 import javax.annotation.Resource;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
@@ -51,7 +48,7 @@ public class ContrivedLoadTest {
 
         startTime = System.currentTimeMillis();
         for(Future<String> future : futures) {
-            String response = future.get();
+            String response = future.get(5000, TimeUnit.MILLISECONDS);
             if("RESPONSE".equals(response)) ++received;
         }
         float elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0f;
@@ -78,7 +75,7 @@ public class ContrivedLoadTest {
 
         startTime = System.currentTimeMillis();
         for(Future<String> future : futures) {
-            String response = future.get();
+            String response = future.get(5000, TimeUnit.MILLISECONDS);
             if("RESPONSE".equals(response)) ++received;
         }
         float elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0f;
