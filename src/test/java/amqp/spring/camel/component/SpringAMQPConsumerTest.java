@@ -54,7 +54,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
 
     @Test
     public void sendMessage() throws Exception {
-        MockEndpoint mockEndpoint = context().getEndpoint("mock:test.a", MockEndpoint.class);
+        MockEndpoint mockEndpoint = getMockEndpoint("mock:test.a");
         mockEndpoint.expectedMessageCount(1);
         context().createProducerTemplate().sendBodyAndHeader("spring-amqp:directExchange:test.a?durable=false&autodelete=true&exclusive=false", "sendMessage", "HeaderKey", "HeaderValue");
         
@@ -67,7 +67,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     
     @Test
     public void sendAsyncMessage() throws Exception {
-        MockEndpoint mockEndpoint = context().getEndpoint("mock:test.b", MockEndpoint.class);
+        MockEndpoint mockEndpoint = getMockEndpoint("mock:test.b");
         mockEndpoint.expectedMessageCount(1);
         context().createProducerTemplate().asyncRequestBodyAndHeader("spring-amqp:directExchange:test.b?durable=false&autodelete=true&exclusive=false", "sendMessage", "HeaderKey", "HeaderValue");
         
@@ -80,7 +80,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     
     @Test
     public void testHeaderAndExchange() throws Exception {
-        MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.b", MockEndpoint.class);
+        MockEndpoint mockEndpointOne = getMockEndpoint("mock:test.b");
         mockEndpointOne.expectedMessageCount(1);
         
         Map<String, Object> headersOne = new HashMap<String, Object>();
@@ -102,7 +102,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     
     @Test
     public void testHeaderOrExchange() throws Exception {
-        MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.d", MockEndpoint.class);
+        MockEndpoint mockEndpointOne = getMockEndpoint("mock:test.d");
         mockEndpointOne.expectedMessageCount(2);
         
         Map<String, Object> headersOne = new HashMap<String, Object>();
@@ -120,7 +120,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     
     @Test
     public void testDefaultExchange() throws Exception {
-        MockEndpoint mockEndpointOne = context().getEndpoint("mock:test.e", MockEndpoint.class);
+        MockEndpoint mockEndpointOne = getMockEndpoint("mock:test.e");
         mockEndpointOne.expectedMessageCount(1);
         
         context().createProducerTemplate().sendBody("spring-amqp::test.e", "testBody");
@@ -130,7 +130,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
     
     @Test
     public void sendMessageTTL() throws Exception {
-        MockEndpoint mockEndpoint = context().getEndpoint("mock:test.a", MockEndpoint.class);
+        MockEndpoint mockEndpoint = getMockEndpoint("mock:test.a");
         mockEndpoint.expectedMessageCount(1);
         context().createProducerTemplate().sendBodyAndHeader("spring-amqp:directExchange:test.a?durable=false&autodelete=true&exclusive=false&timeToLive=1000", "sendMessage", "HeaderKey", "HeaderValue");
         
