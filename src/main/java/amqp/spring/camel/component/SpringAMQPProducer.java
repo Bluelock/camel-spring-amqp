@@ -126,8 +126,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer implements Connecti
 
     @Override
     public void onClose(Connection connection) {
-        LOG.warn("Noticed that the broker has gone offline, attempting to stop producer {}", this.getEndpoint().getEndpointUri());
         this.failed = true;
+        LOG.warn("Noticed that the broker has gone offline, attempting to stop producer {}", this.getEndpoint().getEndpointUri());
         try {
             doStop();
         } catch(Exception e) {

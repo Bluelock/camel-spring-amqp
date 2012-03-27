@@ -170,8 +170,8 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
     @Override
     public void onClose(Connection connection) {
-        LOG.warn("Noticed that the broker has gone offline, attempting to stop consumer {}", this.getEndpoint().getEndpointUri());
         this.failed = true;
+        LOG.warn("Noticed that the broker has gone offline, attempting to stop consumer {}", this.getEndpoint().getEndpointUri());
         try {
             doStop();
         } catch(Exception e) {
