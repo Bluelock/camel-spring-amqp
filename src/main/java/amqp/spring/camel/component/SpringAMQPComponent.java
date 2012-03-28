@@ -52,7 +52,7 @@ public class SpringAMQPComponent extends DefaultComponent {
 
     @Override
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(remaining, getAmqpTemplate(), getAmqpAdministration());
+        SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(this, uri, remaining, getAmqpTemplate(), getAmqpAdministration());
         setProperties(endpoint, parameters);
         return endpoint;
     }
@@ -109,5 +109,10 @@ public class SpringAMQPComponent extends DefaultComponent {
 
     public void setAmqpTemplate(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
-    }    
+    } 
+    
+    public static Throwable findRootCause(Throwable t) {
+        if(t.getCause() == null) return t;
+        return findRootCause(t.getCause());
+    }
 }
