@@ -128,11 +128,6 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     }
 
     @Override
-    public void doStop() throws Exception {
-        super.doStop();
-    }
-    
-    @Override
     public void doShutdown() throws Exception {
         this.messageListener.shutdown();
         super.shutdown();
@@ -183,9 +178,15 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
         private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
         
         public RabbitMQConsumerTask(RabbitTemplate template, String queue, int concurrentConsumers, int prefetchCount) {
-            this.msgConverter = template.getMessageConverter();
             this.listenerContainer = new SimpleMessageListenerContainer();
-            this.listenerContainer.setConnectionFactory(template.getConnectionFactory());
+            
+            if(template != null) {
+                this.msgConverter = template.getMessageConverter();
+                this.listenerContainer.setConnectionFactory(template.getConnectionFactory());
+            } else {
+                LOG.error("No AMQP Template found! Cannot initialize message conversion or connections!");
+            }
+            
             this.listenerContainer.setQueueNames(queue);
             this.listenerContainer.setConcurrentConsumers(concurrentConsumers);
             this.listenerContainer.setPrefetchCount(prefetchCount);
@@ -252,6 +253,9 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
         @Override
         public void onMessage(Message amqpMessage) {
+            if(this.msgConverter == null)
+                throw new IllegalStateException("No message converter present - cannot processs messages!");
+            
             LOG.debug("Received message for routing key {}", amqpMessage.getMessageProperties().getReceivedRoutingKey());
             ExchangePattern exchangePattern = SpringAMQPMessage.getExchangePattern(amqpMessage);
             Exchange exchange = new DefaultExchange(endpoint, exchangePattern);

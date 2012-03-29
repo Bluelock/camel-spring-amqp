@@ -3,9 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 package amqp.spring.camel.component;
 
-import org.apache.camel.CamelContext;
-import org.apache.camel.Component;
-import org.apache.camel.Endpoint;
+import org.apache.camel.*;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +26,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testUriParsingOfDefaultExchangeWithQueueAndRoutingKeyForConsumer() {
         Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
     	String remaining = ":queue1:routingKey1";
-        String uri = "spring-amqp"+remaining;
+        String uri = "spring-amqp:"+remaining;
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
@@ -41,7 +39,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testUriParsingOfDefaultExchangeWithRoutingKeyForProducer() {
         Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
         String remaining = ":routingKey1";
-        String uri = "spring-amqp"+remaining;
+        String uri = "spring-amqp:"+remaining;
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
@@ -53,7 +51,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testIsUsingDefaultExchangeTrue() {
         Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
         String remaining = ":routingKey1";
-        String uri = "spring-amqp"+remaining;
+        String uri = "spring-amqp:"+remaining;
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
@@ -64,7 +62,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     public void testIsNotUsingDefaultExchangeFalse() {
         Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
         String remaining = "exchange1:routingKey1";
-        String uri = "spring-amqp"+remaining;
+        String uri = "spring-amqp:"+remaining;
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
@@ -72,10 +70,30 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     }    
         
     @Test
+    public void testDefaultFanoutConsumer() throws Exception {
+        Processor defaultProcessor = new Processor() {
+            @Override
+            public void process(Exchange exchange) throws Exception { }
+        };
+
+        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
+        String remaining = "exchange2:queue2";
+        String uri = "spring-amqp:"+remaining;
+    	
+    	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
+        endpoint.createConsumer(defaultProcessor);
+    	
+        //If you specify an exchange and queue but nothing else, this should be a fanout exchange
+    	Assert.assertEquals("queue2", endpoint.getQueueName());
+        Assert.assertEquals("exchange2", endpoint.getExchangeName());
+        Assert.assertEquals("fanout", endpoint.getType());
+    }
+    
+    @Test
     public void testHashDelimiters() {
         Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
         String remaining = "exchange1:#.routingKey1.#";
-        String uri = "spring-amqp"+remaining;
+        String uri = "spring-amqp:"+remaining;
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
