@@ -17,7 +17,7 @@
 
     <name>Camel :: Spring-AMQP</name>
     <description>Camel Spring-AMQP support</description>
-    <url>https://github.com/Bluelock/camel-spring-amqp</url>
+    <url>https://github.com/deckerego/camel-spring-amqp</url>
 
     <licenses>
         <license>
@@ -28,9 +28,9 @@
     </licenses>
     
     <scm>
-        <connection>scm:git:git://github.com/Bluelock/camel-spring-amqp.git</connection>
-        <developerConnection>scm:git:git@github.com:Bluelock/camel-spring-amqp.git</developerConnection>
-        <url>git@github.com:Bluelock/camel-spring-amqp.git</url>
+        <connection>scm:git:git://github.com/deckerego/camel-spring-amqp.git</connection>
+        <developerConnection>scm:git:git@github.com:deckerego/camel-spring-amqp.git</developerConnection>
+        <url>git@github.com:deckerego/camel-spring-amqp.git</url>
     </scm>
 
     <developers>
