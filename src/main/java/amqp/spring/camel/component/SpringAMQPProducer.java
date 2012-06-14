@@ -52,9 +52,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     
     @Override
     public void process(Exchange exchange) throws Exception {
-        if(! isRunAllowed()) {
-            if(exchange.getException() == null)
-                exchange.setException(new RejectedExecutionException("SpringAMQPProducer not started yet!"));
+        if(! isRunAllowed() && exchange.getException() == null) {
+            exchange.setException(new RejectedExecutionException("SpringAMQPProducer not started yet!"));
         }
         
         //This is an intentional synchronous invocation of run(), don't mock me
