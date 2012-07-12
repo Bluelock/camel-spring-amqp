@@ -106,7 +106,8 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
             throw new IllegalStateException("Cannot have null queue name for "+getEndpointUri());
         
         SpringAMQPConsumer consumer = new SpringAMQPConsumer(this, processor);
-        ((RabbitTemplate) getAmqpTemplate()).getConnectionFactory().addConnectionListener(consumer);
+        if(getAmqpTemplate() != null)
+            ((RabbitTemplate) getAmqpTemplate()).getConnectionFactory().addConnectionListener(consumer);
         return consumer;
     }
 
@@ -220,7 +221,6 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     @Override
     public boolean isSingleton() {
-        //TODO Technically is it true that there can always be multiple consumers, even for AMQP queues?
         return false;
     }
 

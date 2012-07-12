@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-//TODO Try having unit tests talk to a VM local AMQP broker (like a Qpid broker)
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
 @Component

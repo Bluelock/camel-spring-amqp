@@ -17,7 +17,6 @@ import org.junit.Test;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-//TODO Try having unit tests talk to a VM local AMQP broker (like a Qpid broker)
 public class SpringAMQPProducerTest extends CamelTestSupport {
     
     @Test
