@@ -5,8 +5,6 @@ package amqp.spring.converter;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.support.converter.AbstractMessageConverter;
@@ -19,8 +17,6 @@ import org.springframework.amqp.support.converter.MessageConverter;
  * within the message's properties.
  */
 public class ContentTypeConverterFactory extends AbstractMessageConverter {
-    private static transient final Logger LOG = LoggerFactory.getLogger(ContentTypeConverterFactory.class);
-    
     protected Map<String, MessageConverter> converters;
     protected String defaultContentType = MessageProperties.CONTENT_TYPE_JSON;
     protected MessageConverter fallbackConverter = null;

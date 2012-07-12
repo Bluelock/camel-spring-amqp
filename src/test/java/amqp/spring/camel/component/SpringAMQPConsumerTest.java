@@ -20,7 +20,6 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.JsonMessageConverter;
 
-//TODO Try having unit tests talk to a VM local AMQP broker (like a Qpid broker)
 public class SpringAMQPConsumerTest extends CamelTestSupport {
     
     @Test
@@ -37,8 +36,20 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         };
         
         Consumer amqpConsumer = context().getEndpoint("spring-amqp:directExchange:q0:test.a?durable=false&autodelete=true&exclusive=false").createConsumer(defaultProcessor);
-        amqpConsumer.start();
         amqpConsumer.stop();
+        amqpConsumer.start();
+    }
+    
+    @Test 
+    public void disconnectConsumer() throws Exception {
+        Processor defaultProcessor = new Processor() {
+            @Override
+            public void process(Exchange exchange) throws Exception { }
+        };
+        
+        SpringAMQPConsumer amqpConsumer = (SpringAMQPConsumer) context().getEndpoint("spring-amqp:directExchange:q0:test.a?durable=false&autodelete=true&exclusive=false").createConsumer(defaultProcessor);
+        amqpConsumer.onClose(null);
+        amqpConsumer.onCreate(null);
     }
     
     @Test

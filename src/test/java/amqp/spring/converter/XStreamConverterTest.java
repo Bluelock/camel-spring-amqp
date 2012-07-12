@@ -20,11 +20,13 @@ public class XStreamConverterTest {
         MessageProperties messageProperties = new MessageProperties();
         
         MessageConverter converter = new XStreamConverter();
+        ((XStreamConverter) converter).setEncoding("UTF-8");
         Message amqpMessage = converter.toMessage(testObject, messageProperties);
         Assert.assertEquals("{\"amqp.spring.converter.XStreamConverterTest_-TestObject\":{\"value\":\"TESTING\"}}", new String(amqpMessage.getBody()));
 
         Object newObject = converter.fromMessage(amqpMessage);
         Assert.assertEquals(testObject, newObject);
+        Assert.assertEquals("UTF-8", ((XStreamConverter) converter).getEncoding());
     }
     
     private static class TestObject implements Serializable {
