@@ -43,6 +43,7 @@ import org.springframework.util.ErrorHandler;
 public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionListener {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPConsumer.class);
     private static final String TTL_QUEUE_ARGUMENT = "x-message-ttl";
+    private static final String HA_POLICY_ARGUMENT = "x-ha-policy";
     
     protected SpringAMQPEndpoint endpoint;
     private RabbitMQConsumerTask messageListener;
@@ -86,6 +87,8 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
         Map<String, Object> queueArguments = new HashMap<String, Object>();
         if(endpoint.getTimeToLive() != null)
             queueArguments.put(TTL_QUEUE_ARGUMENT, endpoint.getTimeToLive());
+        if(endpoint.isHa() )
+            queueArguments.put(HA_POLICY_ARGUMENT, "all");
         
         //Declare queue
         this.queue = new Queue(this.endpoint.queueName, this.endpoint.durable, this.endpoint.exclusive, this.endpoint.autodelete, queueArguments);

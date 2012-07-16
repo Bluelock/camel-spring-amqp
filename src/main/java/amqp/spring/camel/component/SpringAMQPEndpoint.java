@@ -246,7 +246,8 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         builder.append("&durable=").append(this.durable);
         builder.append("&exclusive=").append(this.exclusive);
         builder.append("&transactional=").append(this.transactional);
-        this.ha ? builder.append("&x-ha-policy=all") : "";
+        if ( this.ha == true)
+        	builder.append("&x-ha-policy=all");
         
         return builder.toString();        
     }
