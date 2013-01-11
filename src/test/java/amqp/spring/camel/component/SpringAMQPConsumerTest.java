@@ -35,7 +35,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
             public void process(Exchange exchange) throws Exception { }
         };
         
-        Consumer amqpConsumer = context().getEndpoint("spring-amqp:directExchange:q0:test.a?durable=false&autodelete=true&exclusive=false").createConsumer(defaultProcessor);
+        Consumer amqpConsumer = context().getEndpoint("spring-amqp:directExchange:q0:test.a?durable=false&autodelete=true&exclusive=false&ha=true").createConsumer(defaultProcessor);
         amqpConsumer.stop();
         amqpConsumer.start();
     }
