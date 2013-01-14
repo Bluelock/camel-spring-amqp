@@ -27,6 +27,38 @@
         </license>
     </licenses>
 
+    <scm>
+        <connection>scm:git:git://github.com/Bluelock/camel-spring-amqp.git</connection>
+        <developerConnection>scm:git:git@github.com:Bluelock/camel-spring-amqp.git</developerConnection>
+        <url>git@github.com:Bluelock/camel-spring-amqp.git</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>michaelpage</id>
+            <name>Michael Page</name>
+            <email>mpage@bluelock.com</email>
+        </developer>
+        <developer>
+            <id>michael-alford</id>
+            <name>Michael Alford</name>
+            <email>michael.alford@e-gineering.com</email>
+        </developer>
+        <developer>
+            <id>triosgroup</id>
+            <name>Casey Watson</name>
+        </developer>
+        <developer>
+            <id>brbatwork</id>
+            <name>Bill Barbour</name>
+        </developer>
+        <developer>
+            <id>deckerego</id>
+            <name>John Ellis</name>
+            <email>deckerego@gmail.com</email>
+        </developer>
+    </developers>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- Apache Camel 2.8.4 introduces some XML parsing issues, and 2.9 isn't -->
