@@ -5,6 +5,8 @@ package amqp.spring.camel.component;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import com.sun.org.apache.bcel.internal.generic.ExceptionThrower;
 import junit.framework.Assert;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
@@ -14,6 +16,7 @@ import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mock.MockEndpoint;
+import org.apache.camel.impl.JndiRegistry;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Test;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -150,7 +153,24 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         Assert.assertEquals("sendMessage", inMessage.getBody(String.class));
         Assert.assertEquals("HeaderValue", inMessage.getHeader("HeaderKey"));
     }
-    
+
+    @Test
+    public void testHandleException() {
+        try {
+            Object result = context().createProducerTemplate().requestBody("spring-amqp::test.f", "testBody");
+            Assert.fail("Should have thrown exception up to caller but received object: " + result);
+        } catch (RuntimeException e) {
+            // success
+        }
+    }
+
+    @Override
+    protected JndiRegistry createRegistry() throws Exception {
+        JndiRegistry registry = super.createRegistry();
+        registry.bind("exceptionThrower", new TestExceptionThrower());
+        return registry;
+    }
+
     @Override
     protected CamelContext createCamelContext() throws Exception {
         CachingConnectionFactory factory = new CachingConnectionFactory();
@@ -176,7 +196,9 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
                 from("spring-amqp:headerAndExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
                 from("spring-amqp:headerOrExchange:q4:cheese=white|fromage=bleu?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.d");
                 from("spring-amqp::test.e:test.e?durable=false&autodelete=true&exclusive=false").to("mock:test.e");
+                from("spring-amqp::test.f:test.f?durable=false&autodelete=true&exclusive=false").beanRef("exceptionThrower", "explode");
             }
         };
     }
 }
+
