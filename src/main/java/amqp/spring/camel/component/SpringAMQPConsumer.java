@@ -200,6 +200,15 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             if(replyToAddress != null) {
                 org.apache.camel.Message outMessage = exchange.getOut();
                 SpringAMQPMessage replyMessage = new SpringAMQPMessage(outMessage);
+                
+                if (exchange.getException() != null) {
+                    replyMessage.setHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT, true);
+                    replyMessage.setBody(exchange.getException());
+                } else if (exchange.getProperty(Exchange.EXCEPTION_CAUGHT) != null) {
+                    replyMessage.setHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT, true);
+                    replyMessage.setBody(exchange.getProperty(Exchange.EXCEPTION_CAUGHT));
+                }
+
                 exchange.setOut(replyMessage); //Swap out the outbound message
 
                 try {
