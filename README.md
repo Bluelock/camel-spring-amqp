@@ -124,7 +124,7 @@ You can include this component within your Maven POM as:
 	<dependency>
 	    <groupId>com.bluelock</groupId>
 	    <artifactId>camel-spring-amqp</artifactId>
-	    <version>1.0</version>
+	    <version>1.4</version>
 	</dependency>
 
 ## Limitations
