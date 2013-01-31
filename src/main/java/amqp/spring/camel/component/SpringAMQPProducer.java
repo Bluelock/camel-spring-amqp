@@ -4,8 +4,6 @@
 
 package amqp.spring.camel.component;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
 import org.apache.camel.AsyncCallback;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultAsyncProducer;
@@ -17,6 +15,9 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 
 public class SpringAMQPProducer extends DefaultAsyncProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
@@ -145,7 +146,20 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                     LOG.debug("Synchronous send and request for exchange {}", exchange.getExchangeId());
                     Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                     SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
-                    exchange.setOut(camelResponse);
+
+                    Boolean isExceptionCaught = (Boolean)camelResponse.getHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT);
+                    if (isExceptionCaught != null && isExceptionCaught.equals(Boolean.TRUE)) {
+                        Object caughtObject = camelResponse.getBody();
+                        if (caughtObject == null) {
+                            exchange.setException(new RuntimeException("Null exception caught from Camel."));
+                        } else if (caughtObject instanceof Throwable) {
+                            exchange.setException((Throwable)caughtObject);
+                        } else {
+                            exchange.setException(new RuntimeException(caughtObject.toString()));
+                        }
+                    } else {
+                        exchange.setOut(camelResponse);
+                    }
                 } else {
                     LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
                     endpoint.getAmqpTemplate().send(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));

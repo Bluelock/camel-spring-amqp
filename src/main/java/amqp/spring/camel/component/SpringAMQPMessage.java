@@ -19,6 +19,7 @@ public class SpringAMQPMessage extends DefaultMessage {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPMessage.class);
     
     public static final String EXCHANGE_PATTERN = "CamelExchangePattern";
+    public static final String IS_EXCEPTION_CAUGHT = "IsCamelExceptionCaught";
     
     public SpringAMQPMessage() {
         super();
