@@ -200,7 +200,13 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             if(replyToAddress != null) {
                 org.apache.camel.Message outMessage = exchange.getOut();
                 SpringAMQPMessage replyMessage = new SpringAMQPMessage(outMessage);
-                
+
+                // Camel exchange will contain a non-null exception if an unhandled exception has occurred,
+                // such as when using the DefaultErrorHandler with default configuration, or when
+                // using the DeadLetterChannel error handler with an OnException handled=false override.
+                // Exchange will not contain an exception (via getException()) if the exception has been handled,
+                // such as when using the DeadLetterChannel error handler with default configuration, but
+                // the Exchange property EXCEPTION_CAUGHT will contain the handled exception.
                 if (exchange.getException() != null) {
                     replyMessage.setHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT, true);
                     replyMessage.setBody(exchange.getException());
