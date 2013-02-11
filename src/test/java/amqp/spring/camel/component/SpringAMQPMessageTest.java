@@ -56,7 +56,7 @@ public class SpringAMQPMessageTest {
         
         org.springframework.amqp.core.Message message = camelMessage.toAMQPMessage(msgConverter);
         Assert.assertEquals("Test Message 2", new String(message.getBody()));
-        Assert.assertEquals("My Secret", camelMessage.getHeader("Secret"));
+        Assert.assertEquals("My Secret", message.getMessageProperties().getHeaders().get("Secret"));
     }
     
     private static class StringMessageConverter extends AbstractMessageConverter {

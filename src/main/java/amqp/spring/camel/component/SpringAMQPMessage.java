@@ -20,7 +20,7 @@ public class SpringAMQPMessage extends DefaultMessage {
     
     public static final String EXCHANGE_PATTERN = "CamelExchangePattern";
     public static final String IS_EXCEPTION_CAUGHT = "IsCamelExceptionCaught";
-    
+        
     public SpringAMQPMessage() {
         super();
     }
@@ -50,13 +50,10 @@ public class SpringAMQPMessage extends DefaultMessage {
             
             message.setBody(msgConverter.fromMessage(amqpMessage));
         }
-        
-        //We have the body, now restore the headers
-        for(Entry<String, Object> headerEntry : amqpMessage.getMessageProperties().getHeaders().entrySet()) {
-            if(! EXCHANGE_PATTERN.equals(headerEntry.getKey())) {
-                message.setHeader(headerEntry.getKey(), headerEntry.getValue());
-            }
-        }
+
+        //Set & restore headers from AMQP
+        message = SpringAMQPHeader.setBasicPropertiesToHeaders(message, amqpMessage);
+        message = SpringAMQPHeader.copyHeaders(message, amqpMessage.getMessageProperties().getHeaders());
         
         return message;
     }
@@ -102,10 +99,9 @@ public class SpringAMQPMessage extends DefaultMessage {
             if(camelMessage == null || camelMessage.getHeaders() == null)
                 return msg;
                         
-            for(Entry<String, Object> headerEntry : camelMessage.getHeaders().entrySet()) {
-                if(! msg.getMessageProperties().getHeaders().containsKey(headerEntry.getKey()))
-                    msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
-            }
+            //Set headers
+            msg = SpringAMQPHeader.setBasicPropertiesFromHeaders(msg, camelMessage.getHeaders());
+            msg = SpringAMQPHeader.copyHeaders(msg, camelMessage.getHeaders());
             
             //Set the exchange pattern so we can re-set it upon receipt
             if(camelMessage.getExchange() != null) {
