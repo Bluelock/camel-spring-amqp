@@ -4,6 +4,7 @@
 package amqp.spring.camel.component;
 
 import junit.framework.Assert;
+
 import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.camel.test.junit4.CamelTestSupport;
@@ -12,13 +13,18 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 
 public class SpringAMQPComponentTest extends CamelTestSupport {
-    
+
     @Test
     public void testCreateContext() throws Exception {
-        Component component = context().getComponent("spring-amqp", SpringAMQPComponent.class);
+        Component component = context().getComponent(SpringAMQPComponent.DEFAULT_SCHEME, SpringAMQPComponent.class);
         Assert.assertNotNull(component);
     }
-    
+
+    @Test
+    public void testDefaultScheme() throws Exception {
+        Assert.assertEquals(SpringAMQPComponent.DEFAULT_SCHEME, new SpringAMQPComponent().getScheme());
+    }
+
     @Test
     public void testFindRootCause() throws Exception {
         IllegalStateException child = new IllegalStateException("Child Exception");
@@ -26,13 +32,13 @@ public class SpringAMQPComponentTest extends CamelTestSupport {
         RuntimeException grandparent = new RuntimeException("Grandparent Exception", parent);
         Assert.assertEquals(child, SpringAMQPComponent.findRootCause(grandparent));
     }
-    
+
     @Override
     protected CamelContext createCamelContext() throws Exception {
         ConnectionFactory factory = new CachingConnectionFactory();
-        
+
         CamelContext camelContext = super.createCamelContext();
-        camelContext.addComponent("spring-amqp", new SpringAMQPComponent(factory));
+        camelContext.addComponent(SpringAMQPComponent.DEFAULT_SCHEME, new SpringAMQPComponent(factory));
         return camelContext;
     }
 }
