@@ -5,6 +5,7 @@
 package amqp.spring.camel.component;
 
 import java.util.Map;
+
 import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
 import org.apache.camel.impl.DefaultComponent;
@@ -19,42 +20,54 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 public class SpringAMQPComponent extends DefaultComponent {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPComponent.class);
-    
+
+    public static final String DEFAULT_SCHEME = "spring-amqp";
+    protected String scheme = DEFAULT_SCHEME;
+
     protected ConnectionFactory connectionFactory;
     protected AmqpTemplate amqpTemplate;
     protected AmqpAdmin amqpAdministration;
     public static final String ROUTING_KEY_HEADER = "ROUTING_KEY";
-    
+
     public SpringAMQPComponent() {
         this.connectionFactory = new CachingConnectionFactory();
     }
-    
+
     public SpringAMQPComponent(CamelContext context) {
         super(context);
-        
-        //Attempt to load a connection factory from the registry
-        if(this.connectionFactory == null) {
-            Map<String, ConnectionFactory> factories = context.getRegistry().lookupByType(ConnectionFactory.class);
-            if(factories != null && ! factories.isEmpty()) {
+
+        // Attempt to load a connection factory from the registry
+        if (this.connectionFactory == null) {
+            Map < String, ConnectionFactory > factories = context.getRegistry().lookupByType(ConnectionFactory.class);
+            if (factories != null && !factories.isEmpty()) {
                 this.connectionFactory = factories.values().iterator().next();
                 LOG.info("Found AMQP ConnectionFactory in registry for {}", this.connectionFactory.getHost());
             }
         }
-        
-        if(this.connectionFactory == null) {
+
+        if (this.connectionFactory == null) {
             LOG.error("Cannot find a connection factory!");
         }
     }
-    
+
     public SpringAMQPComponent(ConnectionFactory connectionFactory) {
         this.connectionFactory = connectionFactory;
     }
 
     @Override
-    protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(this, uri, remaining, getAmqpTemplate(), getAmqpAdministration());
+    protected Endpoint createEndpoint(String uri, String remaining, Map < String, Object > parameters) throws Exception {
+        SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(this, uri, remaining, getAmqpTemplate(),
+                getAmqpAdministration());
         setProperties(endpoint, parameters);
         return endpoint;
+    }
+
+    public String getScheme() {
+        return scheme;
+    }
+
+    public void setScheme(String scheme) {
+        this.scheme = scheme;
     }
 
     public ConnectionFactory getConnectionFactory() {
@@ -66,21 +79,21 @@ public class SpringAMQPComponent extends DefaultComponent {
     }
 
     public AmqpAdmin getAmqpAdministration() {
-        if(this.amqpAdministration == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
-            //Attempt to load an administration connection from the registry
-            Map<String, AmqpAdmin> factories = getCamelContext().getRegistry().lookupByType(AmqpAdmin.class);
-            if(factories != null && ! factories.isEmpty()) {
+        if (this.amqpAdministration == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
+            // Attempt to load an administration connection from the registry
+            Map < String, AmqpAdmin > factories = getCamelContext().getRegistry().lookupByType(AmqpAdmin.class);
+            if (factories != null && !factories.isEmpty()) {
                 this.amqpAdministration = factories.values().iterator().next();
                 LOG.info("Found AMQP Administrator in registry");
             }
         }
-        
-        if(this.amqpAdministration == null) {
-            //Attempt to construct an AMQP Adminstration instance
+
+        if (this.amqpAdministration == null) {
+            // Attempt to construct an AMQP Adminstration instance
             this.amqpAdministration = new RabbitAdmin(this.connectionFactory);
             LOG.info("Created new AMQP Administration instance");
         }
-        
+
         return this.amqpAdministration;
     }
 
@@ -89,30 +102,31 @@ public class SpringAMQPComponent extends DefaultComponent {
     }
 
     public AmqpTemplate getAmqpTemplate() {
-        if(this.amqpTemplate == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
-            //Attempt to load an AMQP template from the registry
-            Map<String, AmqpTemplate> factories = getCamelContext().getRegistry().lookupByType(AmqpTemplate.class);
-            if(factories != null && ! factories.isEmpty()) {
+        if (this.amqpTemplate == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
+            // Attempt to load an AMQP template from the registry
+            Map < String, AmqpTemplate > factories = getCamelContext().getRegistry().lookupByType(AmqpTemplate.class);
+            if (factories != null && !factories.isEmpty()) {
                 this.amqpTemplate = factories.values().iterator().next();
                 LOG.info("Found AMQP Template in registry");
             }
         }
-        
-        if(this.amqpTemplate == null) {
-            //Attempt to construct an AMQP template
+
+        if (this.amqpTemplate == null) {
+            // Attempt to construct an AMQP template
             this.amqpTemplate = new RabbitTemplate(this.connectionFactory);
             LOG.info("Created new AMQP Template");
         }
-        
+
         return this.amqpTemplate;
     }
 
     public void setAmqpTemplate(AmqpTemplate amqpTemplate) {
         this.amqpTemplate = amqpTemplate;
-    } 
-    
+    }
+
     public static Throwable findRootCause(Throwable t) {
-        if(t.getCause() == null) return t;
+        if (t.getCause() == null)
+            return t;
         return findRootCause(t.getCause());
     }
 }
