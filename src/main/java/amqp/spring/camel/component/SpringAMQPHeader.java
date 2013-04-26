@@ -4,9 +4,8 @@
 
 package amqp.spring.camel.component;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.amqp.core.Message;
+import java.util.Map;
 
 public class SpringAMQPHeader {
     // The (settable) AMQP Basic Properties
@@ -19,25 +18,32 @@ public class SpringAMQPHeader {
     public static final String TYPE = "type";
     
     public static Message setBasicPropertiesFromHeaders(Message msg, Map<String, Object> headers) {
-        for(Map.Entry<String, Object> headerEntry : headers.entrySet()) {
+        for (Map.Entry<String, Object> headerEntry : headers.entrySet()) {
             String headerKey = headerEntry.getKey();
             Object headerValue = headerEntry.getValue();
+
+            String headerValueString = null;
+            if (headerValue != null) {
+                headerValueString = headerValue.toString();
+            }
             
             //Not switching on a string since we want to support Java >= 1.6
-            if(CONTENT_ENCODING.equals(headerKey)) {
-                msg.getMessageProperties().setContentEncoding(headerValue.toString());
+            if (CONTENT_ENCODING.equals(headerKey)) {
+                msg.getMessageProperties().setContentEncoding(headerValueString);
             } else if(CONTENT_TYPE.equals(headerKey)) {
-                msg.getMessageProperties().setContentEncoding(headerValue.toString());
+                msg.getMessageProperties().setContentType(headerValueString);
             } else if(CORRELATION_ID.equals(headerKey)) {
-                msg.getMessageProperties().setCorrelationId(headerValue.toString().getBytes());
+                byte[] correlationId = headerValueString != null ? headerValueString.getBytes() : null;
+                msg.getMessageProperties().setCorrelationId(correlationId);
             } else if(EXPIRATION.equals(headerKey)) {
-                msg.getMessageProperties().setExpiration(headerValue.toString());
+                msg.getMessageProperties().setExpiration(headerValueString);
             } else if(PRIORITY.equals(headerKey)) {
-                msg.getMessageProperties().setPriority(Integer.parseInt(headerValue.toString()));
+                Integer priority = headerValueString != null ? Integer.parseInt(headerValueString) : null;
+                msg.getMessageProperties().setPriority(priority);
             } else if(REPLY_TO.equals(headerKey)) {
-                msg.getMessageProperties().setReplyTo(headerValue.toString());
+                msg.getMessageProperties().setReplyTo(headerValueString);
             } else if(TYPE.equals(headerKey)) {
-                msg.getMessageProperties().setType(headerValue.toString());
+                msg.getMessageProperties().setType(headerValueString);
             }
         }
         
