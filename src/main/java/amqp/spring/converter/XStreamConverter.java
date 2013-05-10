@@ -66,7 +66,7 @@ public class XStreamConverter extends AbstractMessageConverter {
             
             messageProperties.setContentType(MessageProperties.CONTENT_TYPE_JSON);
             messageProperties.setContentEncoding(this.encoding);
-            messageProperties.setContentLength(body.length);
+            messageProperties.setContentLength(body != null ? body.length : 0);
             classMapper.fromClass(object.getClass(), messageProperties);
             return new Message(body, messageProperties);
         } catch (XMLStreamException ex) {
