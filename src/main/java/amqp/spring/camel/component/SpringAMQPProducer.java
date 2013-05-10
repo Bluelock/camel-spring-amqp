@@ -86,8 +86,7 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
         }
 
         //Initialize execution pool
-        //TODO In Camel 2.9+ this becomes ExecutorServiceManager
-        this.threadPool = this.endpoint.getCamelContext().getExecutorServiceStrategy().newDefaultThreadPool(this, "amqp-producer");
+        this.threadPool = this.endpoint.getCamelContext().getExecutorServiceManager().newDefaultThreadPool(this, "amqp-producer");
     }
 
     @Override

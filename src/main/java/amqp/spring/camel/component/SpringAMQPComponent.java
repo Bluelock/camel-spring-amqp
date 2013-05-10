@@ -34,7 +34,7 @@ public class SpringAMQPComponent extends DefaultComponent {
         
         //Attempt to load a connection factory from the registry
         if(this.connectionFactory == null) {
-            Map<String, ConnectionFactory> factories = context.getRegistry().lookupByType(ConnectionFactory.class);
+            Map<String, ConnectionFactory> factories = context.getRegistry().findByTypeWithName(ConnectionFactory.class);
             if(factories != null && ! factories.isEmpty()) {
                 this.connectionFactory = factories.values().iterator().next();
                 LOG.info("Found AMQP ConnectionFactory in registry for {}", this.connectionFactory.getHost());
@@ -68,7 +68,7 @@ public class SpringAMQPComponent extends DefaultComponent {
     public AmqpAdmin getAmqpAdministration() {
         if(this.amqpAdministration == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
             //Attempt to load an administration connection from the registry
-            Map<String, AmqpAdmin> factories = getCamelContext().getRegistry().lookupByType(AmqpAdmin.class);
+            Map<String, AmqpAdmin> factories = getCamelContext().getRegistry().findByTypeWithName(AmqpAdmin.class);
             if(factories != null && ! factories.isEmpty()) {
                 this.amqpAdministration = factories.values().iterator().next();
                 LOG.info("Found AMQP Administrator in registry");
@@ -91,7 +91,7 @@ public class SpringAMQPComponent extends DefaultComponent {
     public AmqpTemplate getAmqpTemplate() {
         if(this.amqpTemplate == null && getCamelContext() != null && getCamelContext().getRegistry() != null) {
             //Attempt to load an AMQP template from the registry
-            Map<String, AmqpTemplate> factories = getCamelContext().getRegistry().lookupByType(AmqpTemplate.class);
+            Map<String, AmqpTemplate> factories = getCamelContext().getRegistry().findByTypeWithName(AmqpTemplate.class);
             if(factories != null && ! factories.isEmpty()) {
                 this.amqpTemplate = factories.values().iterator().next();
                 LOG.info("Found AMQP Template in registry");
@@ -116,3 +116,4 @@ public class SpringAMQPComponent extends DefaultComponent {
         return findRootCause(t.getCause());
     }
 }
+

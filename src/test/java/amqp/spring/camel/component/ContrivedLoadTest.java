@@ -52,14 +52,14 @@ public class ContrivedLoadTest {
             if("RESPONSE".equals(response)) ++received;
         }
         float elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0f;
-        int maxPoolSize = this.camelContext.getExecutorServiceStrategy().getDefaultThreadPoolProfile().getMaxPoolSize();
+        int maxPoolSize = this.camelContext.getExecutorServiceManager().getDefaultThreadPoolProfile().getMaxPoolSize();
         LOG.info("Time to receive synchronous messages: {}", elapsedTime);
         
         Assert.assertEquals(messageCount, received);
         //Assuming 1 second delay per message, elapsed time shouldn't exceed the number of messages sent 
         //dividied by the number of messages that can be simultaneously consumed.
         Assert.assertTrue(String.format("Possible performance issue: %d messages took %f seconds with %d consumers", messageCount, elapsedTime, maxPoolSize),
-                elapsedTime < (messageCount / (double) maxPoolSize));
+                elapsedTime < (messageCount / (double) maxPoolSize) + 1);
     }
     
     @Test
@@ -79,14 +79,14 @@ public class ContrivedLoadTest {
             if("RESPONSE".equals(response)) ++received;
         }
         float elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0f;
-        int maxPoolSize = this.camelContext.getExecutorServiceStrategy().getDefaultThreadPoolProfile().getMaxPoolSize();
+        int maxPoolSize = this.camelContext.getExecutorServiceManager().getDefaultThreadPoolProfile().getMaxPoolSize();
         LOG.info("Time to receive asynchronous messages: {}", elapsedTime);
         
         Assert.assertEquals(messageCount, received);
         //Assuming 1 second delay per message, elapsed time shouldn't exceed the number of messages sent 
         //dividied by the number of messages that can be simultaneously consumed.
         Assert.assertTrue(String.format("Possible performance issue: %d messages took %f seconds with %d consumers", messageCount, elapsedTime, maxPoolSize), 
-                elapsedTime < (messageCount / (double) maxPoolSize));
+                elapsedTime < (messageCount / (double) maxPoolSize) + 1);
     }
     
     @Handler
