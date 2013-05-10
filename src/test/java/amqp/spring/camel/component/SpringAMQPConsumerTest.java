@@ -3,17 +3,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 package amqp.spring.camel.component;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.sun.org.apache.bcel.internal.generic.ExceptionThrower;
 import junit.framework.Assert;
-import org.apache.camel.CamelContext;
-import org.apache.camel.Component;
-import org.apache.camel.Consumer;
-import org.apache.camel.Exchange;
-import org.apache.camel.Message;
-import org.apache.camel.Processor;
+import org.apache.camel.*;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.impl.JndiRegistry;
@@ -22,6 +13,10 @@ import org.junit.Test;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.JsonMessageConverter;
+
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class SpringAMQPConsumerTest extends CamelTestSupport {
     

@@ -48,7 +48,7 @@ public class StringConverter extends AbstractMessageConverter {
             String msgContentType = this.contentType == null ? DEFAULT_CONTENT_TYPE : this.contentType;
             messageProperties.setContentType(msgContentType);
             messageProperties.setContentEncoding(this.encoding);
-            messageProperties.setContentLength(body.length);
+            messageProperties.setContentLength(body != null ? body.length : 0);
             return new Message(body, messageProperties);
         } catch (UnsupportedEncodingException ex) {
             LOG.error("Cannot encode strings as {}", this.encoding, ex);

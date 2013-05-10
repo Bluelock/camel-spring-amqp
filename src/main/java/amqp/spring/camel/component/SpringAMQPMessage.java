@@ -4,7 +4,6 @@
 
 package amqp.spring.camel.component;
 
-import java.util.Map.Entry;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.impl.DefaultMessage;
 import org.slf4j.Logger;
@@ -39,8 +38,7 @@ public class SpringAMQPMessage extends DefaultMessage {
         SpringAMQPMessage message = new SpringAMQPMessage();
         
         //Restore the body based on the message converter provided
-        if(amqpMessage.getBody() == null || 
-                (amqpMessage.getBody() instanceof byte[] && ((byte[]) amqpMessage.getBody()).length == 0)) {
+        if(amqpMessage.getBody() == null || amqpMessage.getBody().length == 0) {
             message.setBody(null);
         } else {
             if(LOG.isTraceEnabled()) {
