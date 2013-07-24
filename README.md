@@ -74,6 +74,10 @@ Parameters available include:
         <td>exclusive</td>
         <td>Mark this endpoint as an exclusive point for message exchanges</td>
     </tr>
+    <tr>
+        <td>autoReply</td>
+        <td>Consumer sends back a response message when ReplyTo header is present in the consumed message. Defaults to true.</td>
+    </tr>
 </table>
 
 ## Spring Integration
