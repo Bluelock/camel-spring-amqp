@@ -197,7 +197,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             
             //Send a reply if one was requested
             Address replyToAddress = amqpMessage.getMessageProperties().getReplyToAddress();
-            if(replyToAddress != null) {
+            if(replyToAddress != null && endpoint.isAutoReply()) {
                 org.apache.camel.Message outMessage = exchange.getOut();
                 SpringAMQPMessage replyMessage = new SpringAMQPMessage(outMessage);
 

@@ -44,6 +44,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     boolean autodelete = true;
     boolean transactional = false;
     boolean ha = false;
+    boolean autoReply = true;
     int concurrentConsumers = 1;
     int prefetchCount = 1;
     Integer timeToLive = null;
@@ -159,6 +160,14 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     public void setHa(boolean ha) {
         this.ha = ha;
     }
+    
+    public boolean isAutoReply() {
+        return autoReply;
+    }
+
+    public void setAutoReply(boolean autoReply) {
+        this.autoReply = autoReply;
+    }
 
     public String getExchangeName() {
         return exchangeName;
@@ -248,6 +257,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         builder.append("&transactional=").append(this.transactional);
         if ( this.ha == true)
         	builder.append("&x-ha-policy=all");
+        builder.append("&autoReply=").append(this.autoReply);
         
         return builder.toString();        
     }
