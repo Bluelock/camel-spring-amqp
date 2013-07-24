@@ -12,6 +12,7 @@ public class SpringAMQPHeader {
     public static final String CONTENT_TYPE = "contentType";
     public static final String CONTENT_ENCODING = "contentEncoding";
     public static final String PRIORITY = "priority";
+    public static final String MESSAGE_ID = "messageId";
     public static final String CORRELATION_ID = "correlationId";
     public static final String REPLY_TO = "replyTo";
     public static final String EXPIRATION = "expiration";
@@ -32,6 +33,8 @@ public class SpringAMQPHeader {
                 msg.getMessageProperties().setContentEncoding(headerValueString);
             } else if(CONTENT_TYPE.equals(headerKey)) {
                 msg.getMessageProperties().setContentType(headerValueString);
+            } else if(MESSAGE_ID.equals(headerKey)) {
+                msg.getMessageProperties().setMessageId(headerValueString);
             } else if(CORRELATION_ID.equals(headerKey)) {
                 byte[] correlationId = headerValueString != null ? headerValueString.getBytes() : null;
                 msg.getMessageProperties().setCorrelationId(correlationId);
@@ -51,6 +54,7 @@ public class SpringAMQPHeader {
     }
     
     public static SpringAMQPMessage setBasicPropertiesToHeaders(SpringAMQPMessage msg, Message amqpMessage) {
+        msg.getHeaders().put(MESSAGE_ID, amqpMessage.getMessageProperties().getMessageId());
         byte[] correlationId = amqpMessage.getMessageProperties().getCorrelationId();
         msg.getHeaders().put(CORRELATION_ID, correlationId == null ? null : new String(correlationId));
         msg.getHeaders().put(CONTENT_ENCODING, amqpMessage.getMessageProperties().getContentEncoding());
@@ -65,7 +69,8 @@ public class SpringAMQPHeader {
     
     public static Message copyHeaders(Message msg, Map<String, Object> headers) {
         for(Map.Entry<String, Object> headerEntry : headers.entrySet()) {
-            if(! msg.getMessageProperties().getHeaders().containsKey(headerEntry.getKey())) {
+            if( !MESSAGE_ID.equals(headerEntry.getKey()) &&
+                    !msg.getMessageProperties().getHeaders().containsKey(headerEntry.getKey())) {
                 msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
             }
         }
