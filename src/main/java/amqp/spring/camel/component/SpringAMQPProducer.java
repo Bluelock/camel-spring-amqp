@@ -139,11 +139,14 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
             
             String routingKeyHeader = message.getHeader(SpringAMQPComponent.ROUTING_KEY_HEADER, String.class);
             String routingKey = routingKeyHeader != null ? routingKeyHeader : endpoint.routingKey;
+            
+            String exchangeNameHeader = message.getHeader(SpringAMQPComponent.EXCHANGE_NAME_HEADER, String.class);
+            String exchangeName = exchangeNameHeader != null ? exchangeNameHeader : endpoint.exchangeName;
 
             try {
                 if(exchange.getPattern().isOutCapable()) {
                     LOG.debug("Synchronous send and request for exchange {}", exchange.getExchangeId());
-                    Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
+                    Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                     SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
 
                     Boolean isExceptionCaught = (Boolean)camelResponse.getHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT);
@@ -161,7 +164,7 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                     }
                 } else {
                     LOG.debug("Synchronous send for exchange {}", exchange.getExchangeId());
-                    endpoint.getAmqpTemplate().send(endpoint.exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
+                    endpoint.getAmqpTemplate().send(exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                 }
             } catch (Throwable t) {
                 LOG.error("Could not deliver message via AMQP", t);
