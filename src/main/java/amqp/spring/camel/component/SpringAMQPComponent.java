@@ -24,7 +24,6 @@ public class SpringAMQPComponent extends DefaultComponent {
     protected AmqpTemplate amqpTemplate;
     protected AmqpAdmin amqpAdministration;
     public static final String ROUTING_KEY_HEADER = "ROUTING_KEY";
-    public static final String EXCHANGE_NAME_HEADER = "EXCHANGE_NAME";
     
     public SpringAMQPComponent() {
         this.connectionFactory = new CachingConnectionFactory();
