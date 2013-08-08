@@ -65,7 +65,8 @@ public class SpringAMQPHeader {
     
     public static Message copyHeaders(Message msg, Map<String, Object> headers) {
         for(Map.Entry<String, Object> headerEntry : headers.entrySet()) {
-            if(! msg.getMessageProperties().getHeaders().containsKey(headerEntry.getKey())) {
+            if( !SpringAMQPComponent.EXCHANGE_NAME_HEADER.equals(headerEntry.getKey()) &&
+                    !msg.getMessageProperties().getHeaders().containsKey(headerEntry.getKey())) {
                 msg.getMessageProperties().setHeader(headerEntry.getKey(), headerEntry.getValue());
             }
         }
