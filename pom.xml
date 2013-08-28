@@ -35,6 +35,11 @@
 
     <developers>
         <developer>
+          <id>robSnyder</id>
+          <name>Rob Snyder</name>
+          <email>rsnyder@bluelock.com</email>
+        </developer>
+        <developer>
             <id>michaelpage</id>
             <name>Michael Page</name>
             <email>mpage@bluelock.com</email>
@@ -95,6 +100,18 @@
             <version>${org.apache.camel.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>org.apache.camel</groupId>
+          <artifactId>camel-spring</artifactId>
+          <version>${org.apache.camel.version}</version>
+          <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <artifactId>spring-tx</artifactId>
+              <groupId>org.springframework</groupId>
+            </exclusion>
+          </exclusions>
+        </dependency>
     
         <!-- Spring -->
         <dependency>
@@ -148,22 +165,6 @@
             <artifactId>camel-test</artifactId>
             <version>${org.apache.camel.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-spring</artifactId>
-            <version>${org.apache.camel.version}</version>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>spring-tx</artifactId>
-                    <groupId>org.springframework</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>spring-context</artifactId>
-                    <groupId>org.springframework</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
