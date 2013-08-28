@@ -12,7 +12,7 @@
     
     <groupId>com.bluelock</groupId>
     <artifactId>camel-spring-amqp</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <packaging>jar</packaging>
 
     <name>Camel :: Spring-AMQP</name>
@@ -100,18 +100,6 @@
             <version>${org.apache.camel.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-          <groupId>org.apache.camel</groupId>
-          <artifactId>camel-spring</artifactId>
-          <version>${org.apache.camel.version}</version>
-          <scope>provided</scope>
-          <exclusions>
-            <exclusion>
-              <artifactId>spring-tx</artifactId>
-              <groupId>org.springframework</groupId>
-            </exclusion>
-          </exclusions>
-        </dependency>
     
         <!-- Spring -->
         <dependency>
@@ -160,6 +148,22 @@
         </dependency>    
     
         <!-- Testing -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-spring</artifactId>
+            <version>${org.apache.camel.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>spring-tx</artifactId>
+                    <groupId>org.springframework</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>spring-context</artifactId>
+                    <groupId>org.springframework</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-test</artifactId>
