@@ -153,7 +153,7 @@
             <artifactId>camel-test</artifactId>
             <version>${org.apache.camel.version}</version>
             <scope>test</scope>
-          </dependency>
+        </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-spring</artifactId>
