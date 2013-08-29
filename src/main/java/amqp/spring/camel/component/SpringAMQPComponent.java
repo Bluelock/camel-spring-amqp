@@ -94,13 +94,16 @@ public class SpringAMQPComponent extends DefaultComponent {
                 for(Map.Entry<String, ConnectionFactory> connection : this.connectionFactory.entrySet()){
                     if(adminConnection.getHost().equals(connection.getValue().getHost()) && adminConnection.getPort() == (connection.getValue().getPort())){
                         this.amqpAdministration.put(connection.getKey(), admin);
+                        break;
                     }
                 }
             }
-            LOG.info("Found AMQP Administrator in registry");
+            if(this.amqpTemplate != null && !this.amqpAdministration.isEmpty()){
+                LOG.info("Found AMQP Administrator in registry");
+            }
         }
         
-        if(this.amqpAdministration == null ) {
+        if(this.amqpAdministration == null || this.amqpAdministration.isEmpty()) {
             //Attempt to construct an AMQP Adminstration instance
             this.amqpAdministration = new HashMap<String, AmqpAdmin>();
             this.amqpAdministration.put(DEFAULT_CONNECTION, new RabbitAdmin(this.connectionFactory.values().iterator().next()));
@@ -130,13 +133,16 @@ public class SpringAMQPComponent extends DefaultComponent {
                 for(Map.Entry<String, ConnectionFactory> connection : this.connectionFactory.entrySet()){
                     if(adminConnection.getHost().equals(connection.getValue().getHost()) && adminConnection.getPort() == (connection.getValue().getPort())){
                         this.amqpTemplate.put(connection.getKey(), template);
+                        break;
                     }
                 }
             }
-            LOG.info("Found AMQP Template in registry");
+            if(this.amqpTemplate != null && !this.amqpTemplate.isEmpty()){
+                LOG.info("Found AMQP Template in registry");
+            }
         }
         
-        if(this.amqpTemplate == null) {
+        if(this.amqpTemplate == null || this.amqpTemplate.isEmpty()) {
             //Attempt to construct an AMQP template
             this.amqpTemplate = new HashMap<String, AmqpTemplate>();
             this.amqpTemplate.put(DEFAULT_CONNECTION, new RabbitTemplate(this.connectionFactory.values().iterator().next()));
