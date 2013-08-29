@@ -98,7 +98,7 @@ public class SpringAMQPComponent extends DefaultComponent {
                     }
                 }
             }
-            if(this.amqpTemplate != null && !this.amqpAdministration.isEmpty()){
+            if(this.amqpAdministration != null && !this.amqpAdministration.isEmpty()){
                 LOG.info("Found AMQP Administrator in registry");
             }
         }
