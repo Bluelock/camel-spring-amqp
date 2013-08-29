@@ -12,7 +12,7 @@
     
     <groupId>com.bluelock</groupId>
     <artifactId>camel-spring-amqp</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <packaging>jar</packaging>
 
     <name>Camel :: Spring-AMQP</name>
@@ -34,6 +34,11 @@
     </scm>
 
     <developers>
+        <developer>
+          <id>robSnyder</id>
+          <name>Rob Snyder</name>
+          <email>rsnyder@bluelock.com</email>
+        </developer>
         <developer>
             <id>michaelpage</id>
             <name>Michael Page</name>
