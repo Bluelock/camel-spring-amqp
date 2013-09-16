@@ -35,6 +35,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     protected AmqpAdmin amqpAdministration;
     protected AmqpTemplate amqpTemplate;
             
+    String connection;
     String exchangeName;
     String queueName;
     String routingKey;
@@ -160,6 +161,14 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         this.ha = ha;
     }
 
+    public String getConnection() {
+        return connection;
+    }
+
+    public void setConnection(String connection) {
+        this.connection = connection;
+    }
+
     public String getExchangeName() {
         return exchangeName;
     }
@@ -246,7 +255,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
         builder.append("&durable=").append(this.durable);
         builder.append("&exclusive=").append(this.exclusive);
         builder.append("&transactional=").append(this.transactional);
-        if ( this.ha == true)
+        if ( this.ha )
         	builder.append("&x-ha-policy=all");
         
         return builder.toString();        

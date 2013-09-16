@@ -27,7 +27,7 @@ public class SpringAMQPComponent extends DefaultComponent {
     protected Map<String, AmqpAdmin> amqpAdministration;
     public static final String ROUTING_KEY_HEADER = "ROUTING_KEY";
     public static final String DEFAULT_CONNECTION = "DefaultConnection";
-    public static final String CONNECTION_HEADER = "CONNECTION=";
+    public static final String CONNECTION = "connection";
 
     public SpringAMQPComponent() {
         this(new CachingConnectionFactory());
@@ -62,8 +62,7 @@ public class SpringAMQPComponent extends DefaultComponent {
 
     @Override
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        String connection = remaining.contains(CONNECTION_HEADER) ? remaining.substring(remaining.indexOf(CONNECTION_HEADER)+CONNECTION_HEADER.length())
-                : connectionFactory.keySet().iterator().next();
+        String connection = parameters.get(CONNECTION) != null ? (String) parameters.get(CONNECTION) : connectionFactory.keySet().iterator().next();
         SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(this, uri, remaining,
                 getAmqpTemplate().get(connection), getAmqpAdministration().get(connection));
         setProperties(endpoint, parameters);
