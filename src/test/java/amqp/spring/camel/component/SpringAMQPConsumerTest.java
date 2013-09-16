@@ -159,6 +159,27 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
         }
     }
 
+    @Test
+    public void testWithPrefetchParameter() throws Exception {
+        MockEndpoint mockEndpoint = getMockEndpoint("mock:test.g");
+        mockEndpoint.expectedMessageCount(2);
+        ProducerTemplate producerTemplate = context().createProducerTemplate();
+
+        producerTemplate.sendBodyAndHeader("spring-amqp:directExchange:test.g?durable=false&autodelete=true&exclusive=false&prefetchCount=1", "sendMessage1", "HeaderKey", "HeaderValue");
+        producerTemplate.sendBodyAndHeader("spring-amqp:directExchange:test.g?durable=false&autodelete=true&exclusive=false&prefetchCount=1", "sendMessage2", "HeaderKey", "HeaderValue");
+
+        mockEndpoint.assertIsSatisfied();
+
+        Message inMessage1 = mockEndpoint.getExchanges().get(0).getIn();
+        Assert.assertEquals("sendMessage1", inMessage1.getBody(String.class));
+        Assert.assertEquals("HeaderValue", inMessage1.getHeader("HeaderKey"));
+
+        Message inMessage2 = mockEndpoint.getExchanges().get(1).getIn();
+        Assert.assertEquals("sendMessage2", inMessage2.getBody(String.class));
+        Assert.assertEquals("HeaderValue", inMessage2.getHeader("HeaderKey"));
+
+    }
+
     @Override
     protected JndiRegistry createRegistry() throws Exception {
         JndiRegistry registry = super.createRegistry();
@@ -187,6 +208,7 @@ public class SpringAMQPConsumerTest extends CamelTestSupport {
             public void configure() throws Exception {
                 from("spring-amqp:directExchange:q1:test.a?durable=false&autodelete=true&exclusive=false").to("mock:test.a");
                 from("spring-amqp:directExchange:q5:test.b?durable=false&autodelete=true&exclusive=false").to("mock:test.b");
+                from("spring-amqp:directExchange:q6:test.g?durable=false&prefetchCount=1&acknowledgeMode=auto").to("mock:test.g");
                 from("spring-amqp:headerAndExchange:q2:cheese=asiago&fromage=cheddar?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.b");
                 from("spring-amqp:headerAndExchange:q3:cheese=gouda&fromage=jack?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.c");
                 from("spring-amqp:headerOrExchange:q4:cheese=white|fromage=bleu?type=headers&durable=false&autodelete=true&exclusive=false").to("mock:test.d");

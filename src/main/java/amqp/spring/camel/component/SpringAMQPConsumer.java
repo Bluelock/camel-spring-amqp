@@ -117,6 +117,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             this.listenerContainer.setQueueNames(endpoint.getQueueName());
             this.listenerContainer.setConcurrentConsumers(endpoint.getConcurrentConsumers());
             this.listenerContainer.setPrefetchCount(endpoint.getPrefetchCount());
+            this.listenerContainer.setAcknowledgeMode(endpoint.getAcknowledgeMode());
 
             //Set error handling (send it to Camel)
             this.listenerContainer.setErrorHandler(getErrorHandler());
@@ -129,7 +130,6 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
             //Transactions are currently not supported
             this.listenerContainer.setChannelTransacted(false);
-            this.listenerContainer.setAcknowledgeMode(AcknowledgeMode.NONE);
         }
 
         public void start() {

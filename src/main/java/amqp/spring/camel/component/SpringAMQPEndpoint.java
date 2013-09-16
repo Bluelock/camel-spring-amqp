@@ -8,6 +8,7 @@ import org.apache.camel.*;
 import org.apache.camel.impl.DefaultEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.core.DirectExchange;
@@ -48,6 +49,7 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
     int concurrentConsumers = 1;
     int prefetchCount = 1;
     Integer timeToLive = null;
+    AcknowledgeMode acknowledgeMode = AcknowledgeMode.NONE;
     
     //The second and third parameters to the URI can be interchangable based on the context.
     //Place them here until we determine if we're a consumer or producer.
@@ -203,6 +205,14 @@ public class SpringAMQPEndpoint extends DefaultEndpoint {
 
     public void setAutodelete(boolean autodelete) {
         this.autodelete = autodelete;
+    }
+
+    public void setAcknowledgeMode(String acknowledgeMode) {
+        this.acknowledgeMode = AcknowledgeMode.valueOf(acknowledgeMode.toUpperCase());
+    }
+
+    public AcknowledgeMode getAcknowledgeMode() {
+        return this.acknowledgeMode;
     }
 
     public boolean isDurable() {
