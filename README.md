@@ -75,6 +75,10 @@ Parameters available include:
         <td>Mark this endpoint as an exclusive point for message exchanges</td>
     </tr>
     <tr>
+        <td>acknowledgeMode</td>
+        <td>Sets the acknowledge mode (NONE, AUTO)</td>
+    </tr>
+    <tr>
         <td>connection</td>
         <td>Configure a specific connection factory (for systems with multiple AMQP brokers)</td>
     </tr>
@@ -128,7 +132,7 @@ You can include this component within your Maven POM as:
 	<dependency>
 	    <groupId>com.bluelock</groupId>
 	    <artifactId>camel-spring-amqp</artifactId>
-	    <version>1.6.1</version>
+	    <version>1.6.2</version>
 	</dependency>
 
 ## Limitations
