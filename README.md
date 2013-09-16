@@ -74,6 +74,10 @@ Parameters available include:
         <td>exclusive</td>
         <td>Mark this endpoint as an exclusive point for message exchanges</td>
     </tr>
+    <tr>
+        <td>connection</td>
+        <td>Configure a specific connection factory (for systems with multiple AMQP brokers)</td>
+    </tr>
 </table>
 
 ## Spring Integration
