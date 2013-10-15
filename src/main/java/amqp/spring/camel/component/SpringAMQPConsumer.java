@@ -310,7 +310,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
                         throw new IllegalStateException("Unrecoverable interruption on consumer restart");
                     }
                 }
-            } while (error);
+            } while (error && !endpoint.isStoppingOrStopped());
         }
 
         protected void declareAMQPEntities() {
