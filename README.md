@@ -81,6 +81,9 @@ Parameters available include:
     <tr>
         <td>connection</td>
         <td>Configure a specific connection factory (for systems with multiple AMQP brokers)</td>
+    <tr>
+        <td>autoReply</td>
+        <td>Consumer sends back a response message when ReplyTo header is present in the consumed message. Defaults to true.</td>
     </tr>
 </table>
 
