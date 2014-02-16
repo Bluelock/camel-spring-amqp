@@ -4,6 +4,7 @@
 
 package amqp.spring.camel.component;
 
+import com.rabbitmq.client.Channel;
 import org.aopalliance.aop.Advice;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
@@ -26,6 +27,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.StatefulRetryOperationsInterceptorFactoryBean;
 import org.springframework.amqp.rabbit.connection.Connection;
 import org.springframework.amqp.rabbit.connection.ConnectionListener;
+import org.springframework.amqp.rabbit.core.ChannelAwareMessageListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.retry.MessageKeyGenerator;
@@ -97,7 +99,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     }
     
     //We have to ask the RabbitMQ Template for converters, the interface doesn't have a way to get MessageConverter
-    class RabbitMQMessageListener implements MessageListener {
+    class RabbitMQMessageListener implements ChannelAwareMessageListener {
         private MessageConverter msgConverter;
         private SimpleMessageListenerContainer listenerContainer;
         private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
@@ -179,7 +181,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
         }
 
         @Override
-        public void onMessage(Message amqpMessage) {
+        public void onMessage(Message amqpMessage, Channel channel) {
             if(this.msgConverter == null)
                 throw new IllegalStateException("No message converter present - cannot processs messages!");
             
@@ -191,6 +193,12 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             
             try {
                 getProcessor().process(exchange);
+
+                if (endpoint.getAcknowledgeMode() == AcknowledgeMode.MANUAL) {
+                    long deliveryTag = amqpMessage.getMessageProperties().getDeliveryTag();
+                    LOG.trace("Acknowledging receipt [delivery_tag={}]", deliveryTag);
+                    channel.basicAck(deliveryTag, false);
+                }
             } catch(Throwable t) {
                 exchange.setException(t);
             }
@@ -310,7 +318,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
                         throw new IllegalStateException("Unrecoverable interruption on consumer restart");
                     }
                 }
-            } while (error);
+            } while (error && !endpoint.isStoppingOrStopped());
         }
 
         protected void declareAMQPEntities() {
