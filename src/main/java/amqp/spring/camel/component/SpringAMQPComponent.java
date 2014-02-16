@@ -92,7 +92,7 @@ public class SpringAMQPComponent extends DefaultComponent {
             for(AmqpAdmin admin : adminMap.values()){
                 CachingConnectionFactory adminConnection = (CachingConnectionFactory)((RabbitAdmin)admin).getRabbitTemplate().getConnectionFactory();
                 for(Map.Entry<String, ConnectionFactory> connection : this.connectionFactory.entrySet()){
-                    if(adminConnection.getHost().equals(connection.getValue().getHost()) && adminConnection.getPort() == (connection.getValue().getPort())){
+                    if(identicalConnectionFactories(adminConnection, connection.getValue())){
                         this.amqpAdministration.put(connection.getKey(), admin);
                         break;
                     }
@@ -131,7 +131,7 @@ public class SpringAMQPComponent extends DefaultComponent {
             for(AmqpTemplate template : templateMap.values()){
                 CachingConnectionFactory adminConnection = (CachingConnectionFactory)((RabbitTemplate) template).getConnectionFactory();
                 for(Map.Entry<String, ConnectionFactory> connection : this.connectionFactory.entrySet()){
-                    if(adminConnection.getHost().equals(connection.getValue().getHost()) && adminConnection.getPort() == (connection.getValue().getPort())){
+                    if(identicalConnectionFactories(adminConnection, connection.getValue())){
                         this.amqpTemplate.put(connection.getKey(), template);
                         break;
                     }
@@ -165,6 +165,13 @@ public class SpringAMQPComponent extends DefaultComponent {
     public static Throwable findRootCause(Throwable t) {
         if(t.getCause() == null) return t;
         return findRootCause(t.getCause());
+    }
+
+    private boolean identicalConnectionFactories(ConnectionFactory cf, ConnectionFactory candidateCF) {
+      String host = candidateCF.getHost();
+      String vhost = candidateCF.getVirtualHost();
+      int port = candidateCF.getPort();
+      return cf.getHost().equals(host) && cf.getVirtualHost().equals(vhost) && cf.getPort() == port;
     }
 }
 
