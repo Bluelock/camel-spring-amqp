@@ -70,6 +70,12 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
         this.messageListener.shutdown();
         super.shutdown();
     }
+
+    @Override
+    public void doStop() throws Exception {
+        this.messageListener.shutdown();
+        super.doStop();
+    }
     
     protected static Map<String, Object> parseKeyValues(String routingKey) {
         StringTokenizer tokenizer = new StringTokenizer(routingKey, "&|");
