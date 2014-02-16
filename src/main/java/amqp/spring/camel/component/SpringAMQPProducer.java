@@ -149,7 +149,7 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                     Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                     SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
 
-                    Boolean isExceptionCaught = (Boolean)camelResponse.getHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT);
+                    Boolean isExceptionCaught = camelResponse != null && (Boolean)camelResponse.getHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT, Boolean.FALSE);
                     if (isExceptionCaught != null && isExceptionCaught.equals(Boolean.TRUE)) {
                         Object caughtObject = camelResponse.getBody();
                         if (caughtObject == null) {
