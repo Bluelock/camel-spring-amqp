@@ -28,7 +28,8 @@ public class SpringAMQPComponent extends DefaultComponent {
     public static final String ROUTING_KEY_HEADER = "ROUTING_KEY";
     public static final String DEFAULT_CONNECTION = "DefaultConnection";
     public static final String CONNECTION = "connection";
-
+    public static final String EXCHANGE_NAME_HEADER = "EXCHANGE_NAME";
+    
     public SpringAMQPComponent() {
         this(new CachingConnectionFactory());
     }

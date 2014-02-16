@@ -23,6 +23,8 @@ The routing key is optional, but Queue Name and Exchange Name are required for c
 
 Producers can also defer the routing key to the message header, where the ROUTING_KEY header could be set to the appropriate routing key.
 
+Producers can override the exchange name specified in the URI by setting the EXCHANGE_NAME Camel message header.
+
 Options to the URI include the exchange type, which defaults to direct if none is specified.
 
 For header based exchanges, the URI is similar but name/value pairs can be specified in place of the routing key. For example:
