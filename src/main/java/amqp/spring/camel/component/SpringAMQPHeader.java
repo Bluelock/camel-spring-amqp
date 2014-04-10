@@ -5,6 +5,7 @@
 package amqp.spring.camel.component;
 
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageDeliveryMode;
 import java.util.Map;
 
 public class SpringAMQPHeader {
@@ -16,6 +17,7 @@ public class SpringAMQPHeader {
     public static final String CORRELATION_ID = "correlationId";
     public static final String REPLY_TO = "replyTo";
     public static final String EXPIRATION = "expiration";
+    public static final String DELIVERY_MODE = "deliveryMode";
     public static final String TYPE = "type";
     
     public static Message setBasicPropertiesFromHeaders(Message msg, Map<String, Object> headers) {
@@ -45,6 +47,8 @@ public class SpringAMQPHeader {
                 msg.getMessageProperties().setPriority(priority);
             } else if(REPLY_TO.equals(headerKey)) {
                 msg.getMessageProperties().setReplyTo(headerValueString);
+            } else if(DELIVERY_MODE.equals(headerKey)) {
+                msg.getMessageProperties().setDeliveryMode(MessageDeliveryMode.fromInt(Integer.parseInt(headerValueString)));
             } else if(TYPE.equals(headerKey)) {
                 msg.getMessageProperties().setType(headerValueString);
             }
@@ -62,6 +66,7 @@ public class SpringAMQPHeader {
         msg.getHeaders().put(EXPIRATION, amqpMessage.getMessageProperties().getExpiration());
         msg.getHeaders().put(PRIORITY, amqpMessage.getMessageProperties().getPriority());
         msg.getHeaders().put(REPLY_TO, amqpMessage.getMessageProperties().getReplyTo());
+        msg.getHeaders().put(DELIVERY_MODE, MessageDeliveryMode.toInt(amqpMessage.getMessageProperties().getDeliveryMode()));
         msg.getHeaders().put(TYPE, amqpMessage.getMessageProperties().getType());
 
         return msg;
@@ -76,6 +81,7 @@ public class SpringAMQPHeader {
                     !EXPIRATION.equals(headerEntry.getKey()) &&
                     !PRIORITY.equals(headerEntry.getKey()) &&
                     !REPLY_TO.equals(headerEntry.getKey()) &&
+                    !DELIVERY_MODE.equals(headerEntry.getKey()) &&
                     !TYPE.equals(headerEntry.getKey()) &&
                     !SpringAMQPComponent.ROUTING_KEY_HEADER.equals(headerEntry.getKey()) &&
                     !MESSAGE_ID.equals(headerEntry.getKey()) &&

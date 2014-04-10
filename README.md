@@ -66,7 +66,7 @@ Parameters available include:
     </tr>
     <tr>
         <td>durable</td>
-        <td>Make messages being produced from this endpoint persistent</td>
+        <td>Make queues and exchanges created by this endpoint persistent</td>
     </tr>
     <tr>
         <td>type</td>
@@ -83,6 +83,7 @@ Parameters available include:
     <tr>
         <td>connection</td>
         <td>Configure a specific connection factory (for systems with multiple AMQP brokers)</td>
+    </tr>
     <tr>
         <td>autoReply</td>
         <td>Consumer sends back a response message when ReplyTo header is present in the consumed message. Defaults to true.</td>
