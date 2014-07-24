@@ -181,7 +181,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
             
             StatefulRetryOperationsInterceptorFactoryBean retryOperation = new StatefulRetryOperationsInterceptorFactoryBean();
             retryOperation.setRetryOperations(retryRule);
-            retryOperation.setMessageKeyGeneretor(new DefaultKeyGenerator());
+            retryOperation.setMessageKeyGenerator(new DefaultKeyGenerator());
             
             return new Advice[] { retryOperation.getObject() };
         }
