@@ -30,9 +30,9 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
-    	Assert.assertEquals("", endpoint.exchangeName);
-    	Assert.assertEquals("queue1", endpoint.queueName);
-    	Assert.assertEquals("routingKey1", endpoint.routingKey);
+    	Assert.assertEquals("", endpoint.getExchangeName());
+    	Assert.assertEquals("queue1", endpoint.getQueueName());
+    	Assert.assertEquals("routingKey1", endpoint.getRoutingKey());
     }
     
     @Test
@@ -43,7 +43,7 @@ public class SpringAMQPEndpointTest extends CamelTestSupport {
     	
     	SpringAMQPEndpoint endpoint = new SpringAMQPEndpoint(component, uri, remaining, null, null);
     	
-    	Assert.assertEquals("", endpoint.exchangeName);
+    	Assert.assertEquals("", endpoint.getExchangeName());
     	Assert.assertEquals("routingKey1", ReflectionTestUtils.getField(endpoint, "tempQueueOrKey"));
     }
     

@@ -4,6 +4,8 @@
 
 package amqp.spring.camel.component;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import org.apache.camel.AsyncCallback;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultAsyncProducer;
@@ -16,14 +18,10 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-
 public class SpringAMQPProducer extends DefaultAsyncProducer {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPProducer.class);
     
     protected SpringAMQPEndpoint endpoint;
-    private org.springframework.amqp.core.Exchange exchange;
     private ExecutorService threadPool;
     
     public SpringAMQPProducer(SpringAMQPEndpoint endpoint) {
@@ -65,13 +63,13 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     public void doStart() throws Exception {
         super.doStart();
         
-        this.exchange = this.endpoint.createAMQPExchange();
+        org.springframework.amqp.core.Exchange exchange = this.endpoint.createAMQPExchange();
         if (this.endpoint.isUsingDefaultExchange()) {
-            LOG.info("Using default exchange of type {}", this.exchange.getClass().getSimpleName());
+            LOG.info("Using default exchange of type {}", exchange.getClass().getSimpleName());
         } else {
-            LOG.info("Declaring exchange {} of type {}", this.exchange.getName(), this.exchange.getClass().getSimpleName());
+            LOG.info("Declaring exchange {} of type {}", exchange.getName(), exchange.getClass().getSimpleName());
             try {
-                this.endpoint.amqpAdministration.declareExchange(this.exchange);
+                this.endpoint.amqpAdministration.declareExchange(exchange);
             } catch(AmqpIOException e) {
                 //The actual reason for failed exceptions is often swallowed up by Camel or Spring, find it
                 Throwable rootCause = SpringAMQPComponent.findRootCause(e);
@@ -110,8 +108,8 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
     }
     
     private class AMQPProducerTask implements Runnable {
-        Exchange exchange;
-        AsyncCallback callback;
+        private final Exchange exchange;
+        private final AsyncCallback callback;
         
         public AMQPProducerTask(Exchange exchange) {
             this(exchange, null);
@@ -138,10 +136,10 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
             }
             
             String routingKeyHeader = message.getHeader(SpringAMQPComponent.ROUTING_KEY_HEADER, String.class);
-            String routingKey = routingKeyHeader != null ? routingKeyHeader : endpoint.routingKey;
+            String routingKey = routingKeyHeader != null ? routingKeyHeader : endpoint.getRoutingKey();
             
             String exchangeNameHeader = message.getHeader(SpringAMQPComponent.EXCHANGE_NAME_HEADER, String.class);
-            String exchangeName = exchangeNameHeader != null ? exchangeNameHeader : endpoint.exchangeName;
+            String exchangeName = exchangeNameHeader != null ? exchangeNameHeader : endpoint.getExchangeName();
 
             try {
                 if(exchange.getPattern().isOutCapable()) {
@@ -149,8 +147,7 @@ public class SpringAMQPProducer extends DefaultAsyncProducer {
                     Message amqpResponse = endpoint.getAmqpTemplate().sendAndReceive(exchangeName, routingKey, inMessage.toAMQPMessage(msgConverter));
                     SpringAMQPMessage camelResponse = SpringAMQPMessage.fromAMQPMessage(msgConverter, amqpResponse);
 
-                    Boolean isExceptionCaught = camelResponse != null && (Boolean)camelResponse.getHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT, Boolean.FALSE);
-                    if (isExceptionCaught != null && isExceptionCaught.equals(Boolean.TRUE)) {
+                    if (camelResponse != null && (Boolean)camelResponse.getHeader(SpringAMQPMessage.IS_EXCEPTION_CAUGHT, Boolean.FALSE)) {
                         Object caughtObject = camelResponse.getBody();
                         if (caughtObject == null) {
                             exchange.setException(new RuntimeException("Null exception caught from Camel."));
