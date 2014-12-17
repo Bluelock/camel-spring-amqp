@@ -3,10 +3,10 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 package amqp.spring.camel.component;
 
-import junit.framework.Assert;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.camel.test.junit4.CamelTestSupport;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
