@@ -4,6 +4,8 @@
 
 package amqp.spring.camel.component;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
 import org.apache.camel.impl.DefaultComponent;
@@ -15,9 +17,6 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class SpringAMQPComponent extends DefaultComponent {
     private static transient final Logger LOG = LoggerFactory.getLogger(SpringAMQPComponent.class);
@@ -163,8 +162,7 @@ public class SpringAMQPComponent extends DefaultComponent {
     } 
     
     public static Throwable findRootCause(Throwable t) {
-        if(t.getCause() == null) return t;
-        return findRootCause(t.getCause());
+        return t.getCause()==null ? t : findRootCause(t.getCause());
     }
 
     private boolean identicalConnectionFactories(ConnectionFactory cf, ConnectionFactory candidateCF) {
@@ -174,4 +172,3 @@ public class SpringAMQPComponent extends DefaultComponent {
       return cf.getHost().equals(host) && cf.getVirtualHost().equals(vhost) && cf.getPort() == port;
     }
 }
-
