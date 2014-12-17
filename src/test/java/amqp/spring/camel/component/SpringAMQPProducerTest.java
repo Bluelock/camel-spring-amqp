@@ -4,6 +4,8 @@
 package amqp.spring.camel.component;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.camel.Exchange;
@@ -14,6 +16,7 @@ import org.apache.camel.spi.Synchronization;
 import org.apache.camel.test.junit4.CamelTestSupport;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
@@ -93,7 +96,10 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
         CachingConnectionFactory factory = new CachingConnectionFactory();
         RabbitTemplate amqpTemplate = new RabbitTemplate(factory);
         SpringAMQPComponent amqpComponent = new SpringAMQPComponent(factory);
-        amqpComponent.setAmqpTemplate(amqpTemplate);
+        
+        Map<String, AmqpTemplate> templateMap = new HashMap<String, AmqpTemplate>(1);
+        templateMap.put(SpringAMQPComponent.DEFAULT_CONNECTION, amqpTemplate);
+        amqpComponent.setAmqpTemplate(templateMap);
         
         CamelContext camelContext = super.createCamelContext();
         camelContext.addComponent("spring-amqp", amqpComponent);
