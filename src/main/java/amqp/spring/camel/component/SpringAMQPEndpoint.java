@@ -18,14 +18,14 @@ import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 /**
- * RabbitMQ Consumer URIs are in the format of:<br/>
- * <code>spring-amqp:exchange:queue:routingKey?params=values</code><br/>
+ * RabbitMQ Consumer URIs are in the format of:<br>
+ * <code>spring-amqp:exchange:queue:routingKey?params=values</code><br>
  * 
- * RabbitMQ Producer URIs are in the format of:<br/>
- * <code>spring-amqp:exchange:routingKey?params=values</code><br/>
+ * RabbitMQ Producer URIs are in the format of:<br>
+ * <code>spring-amqp:exchange:routingKey?params=values</code><br>
  * 
- * Producers can also defer the routing key to the message header, in which case the URI could be:<br/>
- * <code>spring-amqp:exchange?params=values</code><br/>
+ * Producers can also defer the routing key to the message header, in which case the URI could be:<br>
+ * <code>spring-amqp:exchange?params=values</code><br>
  * And the ROUTING_KEY header could be set to the appropriate routing key.
  */
 public class SpringAMQPEndpoint extends DefaultEndpoint {
