@@ -9,10 +9,10 @@
         <artifactId>oss-parent</artifactId>
         <version>9</version>
     </parent>
-    
+
     <groupId>com.bluelock</groupId>
     <artifactId>camel-spring-amqp</artifactId>
-    <version>1.6.3</version>
+    <version>1.7.0</version>
     <packaging>jar</packaging>
 
     <name>Camel :: Spring-AMQP</name>
@@ -34,6 +34,11 @@
     </scm>
 
     <developers>
+        <developer>
+          <id>meydrew</id>
+          <name>Andrew Meyerhoff</name>
+          <email>ameyerhoff@bluelock.com</email>
+        </developer>
         <developer>
           <id>robSnyder</id>
           <name>Rob Snyder</name>
@@ -99,7 +104,7 @@
             <version>${org.apache.camel.version}</version>
             <scope>provided</scope>
         </dependency>
-    
+
         <!-- Spring -->
         <dependency>
             <groupId>org.springframework.retry</groupId>
@@ -138,14 +143,14 @@
             <artifactId>logback-core</artifactId>
             <version>${ch.qos.logback.version}</version>
             <scope>test</scope>
-        </dependency>    
+        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${ch.qos.logback.version}</version>
             <scope>test</scope>
-        </dependency>    
-    
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.apache.camel</groupId>
@@ -188,7 +193,7 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
     <build>
         <resources>
             <resource>
@@ -299,4 +304,5 @@
             </build>
         </profile>
     </profiles>
-</project>
+  </project>
+
