@@ -45,6 +45,6 @@
     </bean>
     
     <rabbit:connection-factory id="connectionFactory"/>
-    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="messageConverter" reply-timeout="60000"/>
+    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory" message-converter="messageConverter" reply-timeout="120000"/>
     <rabbit:admin connection-factory="connectionFactory"/>
 </beans>
