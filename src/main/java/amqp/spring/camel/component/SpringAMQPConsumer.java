@@ -22,7 +22,6 @@ import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.HeadersExchange;
 import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.StatefulRetryOperationsInterceptorFactoryBean;
 import org.springframework.amqp.rabbit.connection.Connection;
@@ -49,7 +48,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     private static final String HA_POLICY_ARGUMENT = "x-ha-policy";
 
     protected SpringAMQPEndpoint endpoint;
-    private RabbitMQMessageListener messageListener;
+    private final RabbitMQMessageListener messageListener;
 
     public SpringAMQPConsumer(SpringAMQPEndpoint endpoint, Processor processor) {
         super(endpoint, processor);
@@ -106,8 +105,8 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     
     //We have to ask the RabbitMQ Template for converters, the interface doesn't have a way to get MessageConverter
     class RabbitMQMessageListener implements ChannelAwareMessageListener {
-        private MessageConverter msgConverter;
-        private SimpleMessageListenerContainer listenerContainer;
+        private final MessageConverter msgConverter;
+        private final SimpleMessageListenerContainer listenerContainer;
         private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
 
         public RabbitMQMessageListener(SpringAMQPEndpoint endpoint) {
@@ -119,6 +118,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
                 this.msgConverter = template.getMessageConverter();
                 this.listenerContainer.setConnectionFactory(template.getConnectionFactory());
             } else {
+                this.msgConverter = null;
                 LOG.error("No AMQP Template found! Cannot initialize message conversion or connections!");
             }
 
@@ -272,7 +272,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
      * provide access to needed functionality.
      */
     class SpringAMQPExecutor extends SimpleAsyncTaskExecutor {
-        private SpringAMQPEndpoint endpoint;
+        private final SpringAMQPEndpoint endpoint;
 
         SpringAMQPExecutor(SpringAMQPEndpoint endpoint) {
             this.endpoint = endpoint;
@@ -293,8 +293,8 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
     }
 
     class SpringAMQPExecutorTask implements Runnable {
-        private SpringAMQPEndpoint endpoint;
-        private Runnable delegateTask;
+        private final SpringAMQPEndpoint endpoint;
+        private final Runnable delegateTask;
 
         // Retry every 30 seconds upon error
         public static final long RECOVERY_INTERVAL_MILLISECONDS = 30000L;
@@ -362,7 +362,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
                 queueArguments.put(HA_POLICY_ARGUMENT, "all");
 
             //Declare queue
-            Queue queue = new Queue(this.endpoint.queueName, this.endpoint.durable, this.endpoint.exclusive, this.endpoint.autodelete, queueArguments);
+            Queue queue = new Queue(this.endpoint.getQueueName(), this.endpoint.isDurable(), this.endpoint.isExclusive(), this.endpoint.isAutodelete(), queueArguments);
             this.endpoint.getAmqpAdministration().declareQueue(queue);
             LOG.info("Declared queue {} for endpoint {}.", queue.getName(), endpoint);
             return queue;
@@ -373,15 +373,15 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
             //Is this a header exchange? Bind the key/value pair(s)
             if(exchange instanceof HeadersExchange) {
-                if(this.endpoint.routingKey == null)
+                if(this.endpoint.getRoutingKey() == null)
                     throw new IllegalStateException("Specified a header exchange without a key/value match");
 
-                if(this.endpoint.routingKey.contains("|") && this.endpoint.routingKey.contains("&"))
+                if(this.endpoint.getRoutingKey().contains("|") && this.endpoint.getRoutingKey().contains("&"))
                     throw new IllegalArgumentException("You cannot mix AND and OR expressions within a header binding");
 
-                Map<String, Object> keyValues = parseKeyValues(this.endpoint.routingKey);
+                Map<String, Object> keyValues = parseKeyValues(this.endpoint.getRoutingKey());
                 BindingBuilder.HeadersExchangeMapConfigurer mapConfig = BindingBuilder.bind(queue).to((HeadersExchange) exchange);
-                if(this.endpoint.routingKey.contains("|"))
+                if(this.endpoint.getRoutingKey().contains("|"))
                     binding = mapConfig.whereAny(keyValues).match();
                 else
                     binding = mapConfig.whereAll(keyValues).match();
@@ -392,7 +392,7 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
 
             //Perform routing key binding for direct or topic exchanges
             } else {
-                binding = BindingBuilder.bind(queue).to(exchange).with(this.endpoint.routingKey).noargs();
+                binding = BindingBuilder.bind(queue).to(exchange).with(this.endpoint.getRoutingKey()).noargs();
             }
 
             if (this.endpoint.isUsingDefaultExchange()) {
