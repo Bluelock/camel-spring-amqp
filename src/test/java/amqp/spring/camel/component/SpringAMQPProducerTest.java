@@ -114,6 +114,9 @@ public class SpringAMQPProducerTest extends CamelTestSupport {
                 
                 from("spring-amqp:topicExchange:queue.v:#.v?type=topic&durable=false&autodelete=true&exclusive=false").to("mock:test.v");
                 from("spring-amqp:topicExchange:queue.u:#.u?type=topic&durable=false&autodelete=true&exclusive=false").to("mock:test.u");
+                
+                // we just need to bind some queue to the fanoutExchange otherwise the exchange will not be deleted after the tests
+                from("spring-amqp:fanoutExchange:queue.x?type=fanout&durable=false&autodelete=true&exclusive=false").to("log:foo?level=OFF"); // trash bin
             }
         };
     }
