@@ -70,7 +70,7 @@ Parameters available include:
     </tr>
     <tr>
         <td>type</td>
-        <td>One of the AMQP exchange types: direct, fanout, headers, or topic. Defaults to direct.</td>
+        <td>One of the AMQP exchange types: direct, fanout, headers, or topic. Defaults to fanout.</td>
     </tr>
     <tr>
         <td>exclusive</td>

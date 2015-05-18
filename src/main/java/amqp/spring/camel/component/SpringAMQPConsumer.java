@@ -279,17 +279,9 @@ public class SpringAMQPConsumer extends DefaultConsumer implements ConnectionLis
         }
 
         @Override
-        public void execute(final Runnable task) {
-            Runnable enrichedTask = new SpringAMQPExecutorTask(endpoint, task);
-            super.execute(enrichedTask);
-        }
-
-        @Override
         public void execute(final Runnable task, long startTimeout) {
-            Runnable enrichedTask = new SpringAMQPExecutorTask(endpoint, task);
-            super.execute(enrichedTask, startTimeout);
+            super.execute(new SpringAMQPExecutorTask(endpoint, task), startTimeout);
         }
-
     }
 
     class SpringAMQPExecutorTask implements Runnable {
